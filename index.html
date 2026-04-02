@@ -266,8 +266,8 @@ function splitCSVLine(line){
 function deduplicate(rows){
   var map={};
   rows.forEach(function(row){
-    var key=(row.name||'').trim()+'||'+(row.phone||'').trim();
-    if(!key||key==='||') return;
+    var key=(row.name||'').trim()+'||'+(row.team||'').trim();
+if(!key||key==='||') return;
     if(!map[key]){
       map[key]=Object.assign({},row,{_updated:false});
     } else {
