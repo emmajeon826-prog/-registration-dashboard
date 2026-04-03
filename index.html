@@ -310,6 +310,22 @@ function loadEduList() {
 /* ── 유틸 ── */
 function getCol(id){ return parseInt(document.getElementById(id).value||1)-1; }
 
+/* 한국어 타임스탬프 파싱: "2026. 4. 3 오후 4:36:56" → Date */
+function parseKoTs(ts){
+  if(!ts) return new Date(0);
+  /* ISO 형식이면 그냥 파싱 */
+  var d = new Date(ts);
+  if(!isNaN(d)) return d;
+  /* 한국어 형식 파싱 */
+  var m = ts.match(/(\d{4})[.\s]+(\d{1,2})[.\s]+(\d{1,2})[.\s]*(오전|오후)?\s*(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if(!m) return new Date(0);
+  var yr=parseInt(m[1]), mo=parseInt(m[2])-1, dy=parseInt(m[3]);
+  var ampm=m[4], hr=parseInt(m[5]), mn=parseInt(m[6]), sc=parseInt(m[7]||0);
+  if(ampm==='오후' && hr<12) hr+=12;
+  if(ampm==='오전' && hr===12) hr=0;
+  return new Date(yr, mo, dy, hr, mn, sc);
+}
+
 function splitCSVLine(line){
   var r=[],cur='',inQ=false;
   for(var i=0;i<line.length;i++){
@@ -350,7 +366,7 @@ function deduplicate(rows){
   var result=[];
   Object.keys(groups).forEach(function(key){
     var group=groups[key];
-    group.sort(function(a,b){return new Date(a.ts||0)-new Date(b.ts||0);});
+    group.sort(function(a,b){return parseKoTs(a.ts)-parseKoTs(b.ts);});
     var latest=group[group.length-1];
     result.push(Object.assign({},latest,{_updated:group.length>1}));
   });
@@ -360,7 +376,8 @@ function deduplicate(rows){
 
 function fmtTs(ts){
   if(!ts) return '-';
-  var d=new Date(ts); if(isNaN(d)) return ts;
+  var d=parseKoTs(ts);
+  if(!d||d.getTime()===0) return ts;
   return(d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
 }
 
@@ -644,7 +661,7 @@ function renderTable(){
 
   filtered.sort(function(a,b){
     var va=a[sortKey]||'',vb=b[sortKey]||'';
-    if(sortKey==='ts'){va=new Date(va||0);vb=new Date(vb||0);}
+    if(sortKey==='ts'){va=parseKoTs(va);vb=parseKoTs(vb);}
     return sortAsc?(va>vb?1:-1):(va<vb?1:-1);
   });
 
