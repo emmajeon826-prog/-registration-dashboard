@@ -189,12 +189,13 @@
       <div class="logic-title">자동 중복 처리 방식</div>
       <div class="logic-desc">
         구글 폼에 동일인이 여러 번 응답해도 걱정 없어요.<br>
-        <strong>이름 + 연락처</strong>가 같은 응답들 중 <strong>타임스탬프가 가장 최신인 것만</strong> 자동으로 반영하고, 이전 응답은 모두 제외합니다.
+        <strong>이름</strong>이 같은 응답들 중 <strong>타임스탬프가 가장 최신인 것만</strong> 자동으로 반영하고, 이전 응답은 모두 제외합니다.<br>
+        차수나 참석여부를 변경해서 재신청해도 자동으로 최신 내용으로 교체됩니다.
       </div>
       <div class="logic-example">
-        예시) 김민준 (010-1234-5678)<br>
-        &nbsp;&nbsp;3월 1일 09:00 → 참석 &nbsp;← 이전 응답, 자동 제외<br>
-        &nbsp;&nbsp;3월 15일 10:00 → 불참 &nbsp;← 최신 응답, 반영됨
+        예시) 박래권<br>
+        &nbsp;&nbsp;4월 3일 09:53:22 → 3차 불참석 &nbsp;← 이전 응답, 자동 제외<br>
+        &nbsp;&nbsp;4월 3일 09:56:27 → 1차 참석 &nbsp;&nbsp;&nbsp;← 최신 응답, 반영됨
       </div>
     </div>
     <div class="settings-card">
@@ -222,11 +223,11 @@
         <div class="col-row"><label>팀/유통망</label><input type="number" id="col-team" value="3" min="1"></div>
         <div class="col-row"><label>직무</label><input type="number" id="col-job" value="4" min="1"></div>
         <div class="col-row"><label>이름</label><input type="number" id="col-name" value="5" min="1"></div>
-        <div class="col-row"><label>연락처</label><input type="number" id="col-phone" value="6" min="1"></div>
-        <div class="col-row"><label>교육 차수</label><input type="number" id="col-round" value="7" min="1"></div>
-        <div class="col-row"><label>참석 여부</label><input type="number" id="col-attend" value="8" min="1"></div>
+        <div class="col-row"><label>교육 차수</label><input type="number" id="col-round" value="6" min="1"></div>
+        <div class="col-row"><label>참석 여부</label><input type="number" id="col-attend" value="7" min="1"></div>
+        <div class="col-row"><label>연락처</label><input type="number" id="col-phone" value="8" min="1"></div>
       </div>
-      <div style="font-size:11px;color:var(--text3);margin-top:10px;">중복 판단 기준: 이름 + 연락처가 동일 → 타임스탬프 최신 응답만 유지</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:10px;">중복 판단 기준: <b>이름</b>이 동일한 응답 중 → 타임스탬프가 가장 최신인 응답만 유지</div>
     </div>
   </div>
 </div>
@@ -266,13 +267,14 @@ function splitCSVLine(line){
 function deduplicate(rows){
   var map={};
   rows.forEach(function(row){
-    var key=(row.name||'').trim()+'||'+(row.team||'').trim();
-if(!key||key==='||') return;
+    var key=(row.name||'').trim();
+    if(!key) return;
     if(!map[key]){
       map[key]=Object.assign({},row,{_updated:false});
     } else {
       var exT=new Date(map[key].ts||0), newT=new Date(row.ts||0);
       if(newT>exT) map[key]=Object.assign({},row,{_updated:true});
+      else if(newT<=exT && !map[key]._updated) map[key]._updated=false;
     }
   });
   var result=Object.values(map);
@@ -312,7 +314,7 @@ function loadSheet(){
   if(!url){st.className='status-msg status-err';st.textContent='URL을 입력해 주세요.';return;}
   if(url.indexOf('docs.google.com')<0){st.className='status-msg status-err';st.textContent='구글 스프레드시트 URL이 아닌 것 같아요.';return;}
   st.className='status-msg status-loading';st.textContent='불러오는 중...';
-  fetch('https://corsproxy.io/?'+encodeURIComponent(url))
+  fetch('https://api.allorigins.win/raw?url='+encodeURIComponent(url))
     .then(function(res){if(!res.ok)throw new Error('응답 오류 '+res.status);return res.text();})
     .then(function(text){
       if(text.indexOf('<html')>=0||text.indexOf('<!DOCTYPE')>=0)throw new Error('시트가 공개 게시되었는지 확인해 주세요.');
