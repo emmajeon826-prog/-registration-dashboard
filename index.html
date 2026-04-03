@@ -75,6 +75,8 @@
     .badge-hq { background: var(--blue-bg); color: var(--blue-text); }
     .badge-dist { background: var(--purple-bg); color: var(--purple-text); }
     .badge-new { background: var(--amber-bg); color: var(--amber-text); font-size: 10px; padding: 1px 6px; margin-left: 4px; vertical-align: middle; border-radius: 4px; }
+    tr.updated-row td { background: #FFFBF0; }
+    tr.updated-row:hover td { background: #FFF5DA; }
     .attend-toggle { display: inline-flex; border-radius: var(--radius); overflow: hidden; border: 0.5px solid var(--border2); }
     .atg-btn { padding: 4px 10px; font-size: 12px; border: none; background: transparent; cursor: pointer; font-family: inherit; color: var(--text2); }
     .atg-btn + .atg-btn { border-left: 0.5px solid var(--border); }
@@ -265,19 +267,20 @@ function splitCSVLine(line){
 }
 
 function deduplicate(rows){
-  var map={};
+  var groups={};
   rows.forEach(function(row){
     var key=(row.name||'').trim();
     if(!key) return;
-    if(!map[key]){
-      map[key]=Object.assign({},row,{_updated:false});
-    } else {
-      var exT=new Date(map[key].ts||0), newT=new Date(row.ts||0);
-      if(newT>exT) map[key]=Object.assign({},row,{_updated:true});
-      else if(newT<=exT && !map[key]._updated) map[key]._updated=false;
-    }
+    if(!groups[key]) groups[key]=[];
+    groups[key].push(row);
   });
-  var result=Object.values(map);
+  var result=[];
+  Object.keys(groups).forEach(function(key){
+    var group=groups[key];
+    group.sort(function(a,b){ return new Date(a.ts||0)-new Date(b.ts||0); });
+    var latest=group[group.length-1];
+    result.push(Object.assign({},latest,{_updated:group.length>1}));
+  });
   var count=result.filter(function(r){return r._updated;}).length;
   return {data:result, count:count};
 }
@@ -387,11 +390,11 @@ function renderTable(){
   if(!filtered.length){tbody.innerHTML='';noData.style.display='block';return;}
   noData.style.display='none';
   tbody.innerHTML=filtered.map(function(d,i){
-    return '<tr>'
-      +'<td style="color:var(--text3);font-size:12px;min-width:95px">'+fmtTs(d.ts)+(d._updated?'<span class="badge badge-new">재응답</span>':'')+'</td>'
+    return '<tr'+(d._updated?' class="updated-row"':'')+'>'
+      +'<td style="color:var(--text3);font-size:12px;min-width:95px">'+fmtTs(d.ts)+'</td>'
       +'<td><span class="badge '+(d.org==='본사'?'badge-hq':'badge-dist')+'">'+d.org+'</span></td>'
       +'<td>'+d.team+'</td><td>'+d.job+'</td>'
-      +'<td style="font-weight:500">'+d.name+'</td>'
+      +'<td style="font-weight:500">'+d.name+(d._updated?' <span class="badge badge-new">재응답</span>':'')+'</td>'
       +'<td style="color:var(--text2)">'+d.phone+'</td>'
       +'<td>'+d.round+'</td>'
       +'<td><div class="attend-toggle">'
