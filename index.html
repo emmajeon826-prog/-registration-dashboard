@@ -317,18 +317,33 @@ function loadSheet(){
   if(!url){st.className='status-msg status-err';st.textContent='URL을 입력해 주세요.';return;}
   if(url.indexOf('docs.google.com')<0){st.className='status-msg status-err';st.textContent='구글 스프레드시트 URL이 아닌 것 같아요.';return;}
   st.className='status-msg status-loading';st.textContent='불러오는 중...';
-  fetch('https://api.allorigins.win/raw?url='+encodeURIComponent(url))
-    .then(function(res){if(!res.ok)throw new Error('응답 오류 '+res.status);return res.text();})
-    .then(function(text){
-      if(text.indexOf('<html')>=0||text.indexOf('<!DOCTYPE')>=0)throw new Error('시트가 공개 게시되었는지 확인해 주세요.');
-      var parsed=parseCSV(text);
-      if(!parsed.length)throw new Error('데이터를 찾을 수 없어요. 열 매핑을 확인해 주세요.');
-      applyData(parsed);
-      document.getElementById('sync-info').textContent='구글 시트 연동됨 · '+new Date().toLocaleTimeString();
-      st.className='status-msg status-ok';
-      st.textContent='✓ 전체 '+parsed.length+'개 응답 → 중복 제거 후 '+dedupedData.length+'명 반영 ('+new Date().toLocaleTimeString()+')';
-    })
-    .catch(function(e){st.className='status-msg status-err';st.textContent='오류: '+e.message;});
+  var proxies=[
+    'https://corsproxy.io/?'+encodeURIComponent(url),
+    'https://api.allorigins.win/raw?url='+encodeURIComponent(url),
+    'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(url)
+  ];
+  function tryProxy(idx){
+    if(idx>=proxies.length){
+      st.className='status-msg status-err';
+      st.textContent='오류: 연결 실패. 잠시 후 다시 시도해 주세요.';
+      return;
+    }
+    st.textContent='불러오는 중... (시도 '+(idx+1)+'/'+proxies.length+')';
+    fetch(proxies[idx])
+      .then(function(res){ if(!res.ok) throw new Error('status '+res.status); return res.text(); })
+      .then(function(text){
+        if(text.indexOf('<html')>=0||text.indexOf('<!DOCTYPE')>=0) throw new Error('html');
+        if(!text.trim()) throw new Error('empty');
+        var parsed=parseCSV(text);
+        if(!parsed.length) throw new Error('no data');
+        applyData(parsed);
+        document.getElementById('sync-info').textContent='구글 시트 연동됨 · '+new Date().toLocaleTimeString();
+        st.className='status-msg status-ok';
+        st.textContent='✓ 전체 '+parsed.length+'개 응답 → 중복 제거 후 '+dedupedData.length+'명 반영 ('+new Date().toLocaleTimeString()+')';
+      })
+      .catch(function(){ tryProxy(idx+1); });
+  }
+  tryProxy(0);
 }
 
 function updateRoundFilter(){
