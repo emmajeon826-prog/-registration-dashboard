@@ -44,7 +44,7 @@
     .vsection{display:none;}.vsection.active{display:block;}
 
     /* ── 통계 카드 ── */
-    .stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:1.5rem;}
+    .stat-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:1.5rem;}
     .stat{background:var(--bg);border-radius:var(--radius);padding:1rem 1.25rem;border:0.5px solid var(--border);}
     .stat-label{font-size:12px;color:var(--text2);margin-bottom:6px;}
     .stat-value{font-size:26px;font-weight:500;}
@@ -98,6 +98,7 @@
     .atg-btn+.atg-btn{border-left:0.5px solid var(--border);}
     .atg-btn.on-attend{background:var(--green-bg);color:var(--green-text);font-weight:500;}
     .atg-btn.on-absent{background:var(--red-bg);color:var(--red-text);font-weight:500;}
+    .atg-btn.none-btn{font-size:14px;color:var(--text3);}
     .no-data{text-align:center;padding:3rem;color:var(--text3);font-size:14px;}
 
     /* ── 교육 관리(설정) ── */
@@ -173,9 +174,10 @@
   <div class="vsection" id="vsec-stats">
     <div class="stat-grid">
       <div class="stat"><div class="stat-label">총 신청 인원</div><div class="stat-value" id="st-total">0</div><div class="stat-sub">명 (중복 제거)</div></div>
-      <div class="stat"><div class="stat-label">참석 예정</div><div class="stat-value" id="st-attend" style="color:var(--green)">0</div><div class="stat-sub">명</div></div>
-      <div class="stat"><div class="stat-label">불참</div><div class="stat-value" id="st-absent" style="color:var(--red)">0</div><div class="stat-sub">명</div></div>
-      <div class="stat"><div class="stat-label">참석률</div><div class="stat-value" id="st-rate">0%</div><div class="stat-sub">전체 대비</div></div>
+      <div class="stat"><div class="stat-label">신청 참석 예정</div><div class="stat-value" id="st-attend" style="color:var(--green)">0</div><div class="stat-sub">명</div></div>
+      <div class="stat"><div class="stat-label">신청 불참</div><div class="stat-value" id="st-absent" style="color:var(--red)">0</div><div class="stat-sub">명</div></div>
+      <div class="stat"><div class="stat-label">실제 출석 체크</div><div class="stat-value" id="st-actual" style="color:var(--blue)">0</div><div class="stat-sub">명 출석 확인</div></div>
+      <div class="stat"><div class="stat-label">신청 참석률</div><div class="stat-value" id="st-rate">0%</div><div class="stat-sub">전체 대비</div></div>
     </div>
     <div class="charts">
       <div class="card"><div class="card-title">소속별 신청 현황</div><div class="donut-wrap"><canvas id="donut-chart" width="110" height="110"></canvas><div class="legend" id="org-legend"></div></div></div>
@@ -190,7 +192,8 @@
       <div class="filter-row">
         <select id="fl-org" onchange="renderTable()"><option value="">전체 소속</option><option>본사</option><option>유통망</option></select>
         <select id="fl-round" onchange="renderTable()"><option value="">전체 차수</option></select>
-        <select id="fl-attend" onchange="renderTable()"><option value="">전체 참석여부</option><option>참석</option><option>불참</option></select>
+        <select id="fl-attend" onchange="renderTable()"><option value="">신청 참석여부 전체</option><option>참석</option><option>불참</option><option>불참석</option></select>
+        <select id="fl-actual" onchange="renderTable()"><option value="">실제 출석 전체</option><option value="출석">출석</option><option value="결석">결석</option><option value="">미체크</option></select>
         <select id="fl-updated" onchange="renderTable()"><option value="">전체</option><option value="yes">재응답만</option></select>
         <input type="text" id="fl-search" placeholder="이름 검색" oninput="renderTable()"/>
         <button class="btn-ghost" onclick="manualRefresh()">↻ 새로고침</button>
@@ -209,9 +212,10 @@
               <th onclick="sortBy('team')">팀/유통망 <span id="arr-team">↕</span></th>
               <th onclick="sortBy('job')">직무 <span id="arr-job">↕</span></th>
               <th onclick="sortBy('name')">이름 <span id="arr-name">↕</span></th>
-              <th>연락처</th>
+              <th onclick="sortBy('phone')">연락처 <span id="arr-phone">↕</span></th>
               <th onclick="sortBy('round')">차수 <span id="arr-round">↕</span></th>
-              <th>참석 여부</th>
+              <th>신청 참석여부</th>
+              <th>실제 출석 체크</th>
             </tr>
           </thead>
           <tbody id="tbl-body"></tbody>
@@ -368,15 +372,26 @@ function fetchCSV(url, onSuccess, onError){
     'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(url)
   ];
   function tryNext(idx){
-    if(idx>=proxies.length){ onError('모든 프록시 연결 실패'); return; }
-    fetch(proxies[idx])
-      .then(function(res){ if(!res.ok) throw new Error('status '+res.status); return res.text(); })
+    if(idx>=proxies.length){ onError('모든 프록시 연결 실패. 잠시 후 다시 시도하거나 새로고침 버튼을 눌러주세요.'); return; }
+    /* 10초 타임아웃 적용 */
+    var controller = typeof AbortController!=='undefined' ? new AbortController() : null;
+    var timer = controller ? setTimeout(function(){ controller.abort(); }, 10000) : null;
+    var opts = controller ? {signal: controller.signal} : {};
+    fetch(proxies[idx], opts)
+      .then(function(res){
+        if(timer) clearTimeout(timer);
+        if(!res.ok) throw new Error('status '+res.status);
+        return res.text();
+      })
       .then(function(text){
         if(text.indexOf('<html')>=0||text.indexOf('<!DOCTYPE')>=0) throw new Error('html');
         if(!text.trim()) throw new Error('empty');
         onSuccess(text);
       })
-      .catch(function(){ tryNext(idx+1); });
+      .catch(function(e){
+        if(timer) clearTimeout(timer);
+        tryNext(idx+1);
+      });
   }
   tryNext(0);
 }
@@ -615,10 +630,13 @@ function renderTable(){
   var sel=document.getElementById('fl-round'),cur=sel.value;
   sel.innerHTML='<option value="">전체 차수</option>'+rounds.map(function(r){return'<option'+(r===cur?' selected':'')+'>'+r+'</option>';}).join('');
 
+  var actualF=document.getElementById('fl-actual').value;
   var filtered=rows.map(function(d,i){return Object.assign({},d,{_i:i});}).filter(function(d){
     if(orgF&&d.org!==orgF) return false;
     if(roundF&&d.round!==roundF) return false;
-    if(attendF&&d.attend!==attendF) return false;
+    if(attendF&&(d.attend||'')!==attendF) return false;
+    if(actualF==='출석'&&d._actual!=='출석') return false;
+    if(actualF==='결석'&&d._actual!=='결석') return false;
     if(updF==='yes'&&!d._updated) return false;
     if(search&&d.name.indexOf(search)<0) return false;
     return true;
@@ -671,10 +689,16 @@ function toggleAttend(i,v){
   if(activeVTab==='stats') renderStats();
 }
 
+function toggleActual(i,v){
+  var edu=getCurrentEdu(); if(!edu) return;
+  edu.deduped[i]._actual=v;
+  renderTable();
+}
+
 function exportCSV(){
   var edu=getCurrentEdu(); if(!edu||!edu.deduped.length) return;
-  var headers=['응답시간','소속','팀/유통망','직무','이름','연락처','차수','참석여부','재응답여부'];
-  var rows=edu.deduped.map(function(d){return[d.ts,d.org,d.team,d.job,d.name,d.phone,d.round,d.attend,d._updated?'재응답':'최초'];});
+  var headers=['응답시간','소속','팀/유통망','직무','이름','연락처','차수','신청참석여부','실제출석','재응답여부'];
+  var rows=edu.deduped.map(function(d){return[d.ts,d.org,d.team,d.job,d.name,d.phone,d.round,d.attend,d._actual||'미체크',d._updated?'재응답':'최초'];});
   var csv='\uFEFF'+[headers].concat(rows).map(function(r){return r.join(',');}).join('\n');
   var a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
@@ -691,7 +715,9 @@ function renderStats(){
   document.getElementById('st-total').textContent=total;
   document.getElementById('st-attend').textContent=attend;
   document.getElementById('st-absent').textContent=absent;
+  var actual=rows.filter(function(d){return d._actual==='출석';}).length;
   document.getElementById('st-rate').textContent=total?Math.round(attend/total*100)+'%':'0%';
+  document.getElementById('st-actual').textContent=actual;
   var hq=rows.filter(function(d){return d.org==='본사';}).length;
   var dist=rows.filter(function(d){return d.org==='유통망';}).length;
   drawDonut(hq,dist);
