@@ -140,6 +140,7 @@
       .col-map{grid-template-columns:1fr;}
     }
   </style>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -150,6 +151,7 @@
       <span class="pulse"></span>자동 새로고침 중
     </span>
     <span id="sync-info" style="font-size:12px;color:var(--text3);">교육을 선택하세요</span>
+    <span id="cache-notice" style="display:none;font-size:11px;color:var(--amber);background:var(--amber-bg);padding:3px 9px;border-radius:20px;">구글 시트 반영까지 최대 5분 소요</span>
   </div>
 </header>
 
@@ -197,7 +199,7 @@
         <select id="fl-updated" onchange="renderTable()"><option value="">전체</option><option value="yes">재응답만</option></select>
         <input type="text" id="fl-search" placeholder="이름 검색" oninput="renderTable()"/>
         <button class="btn-ghost" onclick="manualRefresh()">↻ 새로고침</button>
-        <button class="btn-ghost" onclick="exportCSV()" style="margin-left:auto">CSV 내보내기 ↗</button>
+        <button class="btn-ghost" onclick="exportExcel()" style="margin-left:auto;background:var(--green-bg);color:var(--green-text);border-color:var(--green);">엑셀 다운로드 ↗</button>
       </div>
       <div class="tbl-summary" id="tbl-summary">
         <span id="sum-text"></span>
@@ -369,20 +371,29 @@ function parseCSV(text){
 }
 
 function deduplicate(rows){
+  /* 이름+연락처 조합으로 그룹 (연락처 없으면 이름만) */
   var groups={};
   rows.forEach(function(row){
-    var key=(row.name||'').trim();
-    if(!key) return;
+    var name=(row.name||'').trim();
+    if(!name) return;
+    var phone=(row.phone||'').trim().replace(/^0+$/,'');
+    var key=phone?name+'::'+phone:name;
     if(!groups[key]) groups[key]=[];
     groups[key].push(row);
   });
   var result=[];
   Object.keys(groups).forEach(function(key){
     var group=groups[key];
+    /* 타임스탬프 기준 오름차순 정렬 → 마지막이 최신 */
     group.sort(function(a,b){return parseKoTs(a.ts)-parseKoTs(b.ts);});
     var latest=group[group.length-1];
-    result.push(Object.assign({},latest,{_updated:group.length>1}));
+    result.push(Object.assign({},latest,{
+      _updated:group.length>1,
+      _prevTs:group.length>1?parseKoTs(group[group.length-2].ts):null
+    }));
   });
+  /* 전체를 최신순 정렬 */
+  result.sort(function(a,b){return parseKoTs(b.ts)-parseKoTs(a.ts);});
   var count=result.filter(function(r){return r._updated;}).length;
   return {data:result,count:count};
 }
@@ -451,6 +462,7 @@ function loadEduData(id, onDone){
 
 function updateSyncInfo(edu){
   document.getElementById('sync-info').textContent = edu.name+' · '+edu.lastSync;
+  document.getElementById('cache-notice').style.display='inline';
   var badge = document.getElementById('auto-badge');
   badge.style.display = edu.autoRefresh ? 'flex' : 'none';
 }
@@ -738,14 +750,44 @@ function toggleActual(i,v){
   renderTable();
 }
 
-function exportCSV(){
+function exportExcel(){
   var edu=getCurrentEdu(); if(!edu||!edu.deduped.length) return;
   var headers=['응답시간','소속','팀/유통망','직무','이름','연락처','차수','신청참석여부','실제출석','재응답여부'];
-  var rows=edu.deduped.map(function(d){return[d.ts,d.org,d.team,d.job,d.name,d.phone,d.round,d.attend,d._actual||'미체크',d._updated?'재응답':'최초'];});
-  var csv='\uFEFF'+[headers].concat(rows).map(function(r){return r.join(',');}).join('\n');
-  var a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-  a.download=(edu.name||'교육')+'_신청명단.csv'; a.click();
+  var rows=edu.deduped.map(function(d){
+    return[d.ts,d.org,d.team,d.job,d.name,d.phone||'',d.round,d.attend,d._actual||'미체크',d._updated?'재응답':'최초'];
+  });
+  var wsData=[headers].concat(rows);
+  var ws=XLSX.utils.aoa_to_sheet(wsData);
+  /* 컬럼 너비 설정 */
+  ws['!cols']=[
+    {wch:20},{wch:8},{wch:14},{wch:8},{wch:10},{wch:14},
+    {wch:36},{wch:10},{wch:10},{wch:10}
+  ];
+  /* 헤더 스타일 */
+  var range=XLSX.utils.decode_range(ws['!ref']);
+  for(var C=range.s.c;C<=range.e.c;C++){
+    var addr=XLSX.utils.encode_cell({r:0,c:C});
+    if(!ws[addr]) continue;
+    ws[addr].s={font:{bold:true},fill:{fgColor:{rgb:'4472C4'}},alignment:{horizontal:'center'}};
+  }
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'신청명단');
+  /* 실제출석 요약 시트 */
+  var attended=edu.deduped.filter(function(d){return d._actual==='출석';});
+  var absent=edu.deduped.filter(function(d){return d._actual==='결석';});
+  var sumHeaders=['구분','인원수'];
+  var sumRows=[
+    ['총 신청',edu.deduped.length],
+    ['신청 참석',edu.deduped.filter(function(d){return d.attend==='참석';}).length],
+    ['신청 불참석',edu.deduped.filter(function(d){return d.attend==='불참석'||d.attend==='불참';}).length],
+    ['실제 출석 확인',attended.length],
+    ['실제 결석',absent.length],
+    ['미체크',edu.deduped.length-attended.length-absent.length]
+  ];
+  var wsSummary=XLSX.utils.aoa_to_sheet([sumHeaders].concat(sumRows));
+  wsSummary['!cols']=[{wch:16},{wch:8}];
+  XLSX.utils.book_append_sheet(wb,wsSummary,'요약');
+  XLSX.writeFile(wb,(edu.name||'교육')+'_신청명단_'+(new Date().toLocaleDateString('ko-KR').replace(/\. /g,'').replace('.',''))+'.xlsx');
 }
 
 /* ── 통계 렌더 ── */
