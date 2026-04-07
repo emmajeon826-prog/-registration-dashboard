@@ -63,7 +63,7 @@
     .legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
     .round-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;}
     .round-item{background:var(--bg2);border-radius:var(--radius);padding:12px;}
-    .round-name{font-size:13px;font-weight:500;margin-bottom:3px;}
+    .round-name{font-size:12px;font-weight:500;margin-bottom:3px;white-space:normal;word-break:keep-all;line-height:1.4;}
     .round-sub{font-size:11px;color:var(--text3);margin-bottom:8px;}
     .round-bar-wrap{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-bottom:6px;}
     .round-bar{height:100%;border-radius:2px;background:var(--green);}
@@ -81,10 +81,10 @@
     .tbl-summary b{color:var(--text);font-weight:500;}
     .dedup-pill{font-size:11px;padding:2px 10px;border-radius:20px;background:var(--amber-bg);color:var(--amber-text);display:none;}
     .table-wrap{overflow-x:auto;}
-    table{width:100%;border-collapse:collapse;font-size:13px;}
+    table{width:100%;border-collapse:collapse;font-size:13px;min-width:900px;}
     th{font-size:11px;font-weight:500;color:var(--text2);padding:8px 10px;border-bottom:0.5px solid var(--border);text-align:left;white-space:nowrap;cursor:pointer;user-select:none;}
     th:hover{color:var(--text);}
-    td{padding:10px;border-bottom:0.5px solid var(--border);color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;}
+    td{padding:10px;border-bottom:0.5px solid var(--border);color:var(--text);white-space:nowrap;}
     tr:last-child td{border-bottom:none;}
     tbody tr:hover td{background:var(--bg2);}
     .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:var(--radius);}
@@ -191,7 +191,7 @@
     <div class="list-card">
       <div class="filter-row">
         <select id="fl-org" onchange="renderTable()"><option value="">전체 소속</option><option>본사</option><option>유통망</option></select>
-        <select id="fl-round" onchange="renderTable()"><option value="">전체 차수</option></select>
+        <select id="fl-round" onchange="renderTable()" style="max-width:280px;"><option value="">전체 차수</option></select>
         <select id="fl-attend" onchange="renderTable()"><option value="">신청 참석여부 전체</option><option>참석</option><option>불참</option><option>불참석</option></select>
         <select id="fl-actual" onchange="renderTable()"><option value="">실제 출석 전체</option><option value="출석">출석</option><option value="결석">결석</option><option value="">미체크</option></select>
         <select id="fl-updated" onchange="renderTable()"><option value="">전체</option><option value="yes">재응답만</option></select>
@@ -713,7 +713,7 @@ function renderTable(){
       +'</div>';
     var phoneVal=(d.phone||'').trim().replace(/^0+$/, '');
     var phoneTxt=phoneVal===''?'':phoneVal;
-    var tr = '<tr'+(d._updated?' class="updated-row"':'')+'>'      +'<td style="color:var(--text3);font-size:12px;white-space:nowrap;">'+fmtTs(d.ts)+'</td>'      +'<td><span class="badge '+(d.org==='본사'?'badge-hq':'badge-dist')+'">'+d.org+'</span></td>'      +'<td>'+d.team+'</td>'      +'<td>'+d.job+'</td>'      +'<td style="font-weight:500;">'+d.name+(d._updated?' <span class="badge-new">재응답</span>':'')+'</td>'      +'<td style="color:var(--text2);font-size:13px;">'+phoneTxt+'</td>'      +'<td style="font-size:13px;max-width:160px;overflow:hidden;text-overflow:ellipsis;">'+d.round+'</td>'      +'<td style="font-size:13px;">'+attendTxt+'</td>'      +'<td>'+actualToggle+'</td>'      +'</tr>';
+    var tr = '<tr'+(d._updated?' class="updated-row"':'')+'>'      +'<td style="color:var(--text3);font-size:12px;white-space:nowrap;">'+fmtTs(d.ts)+'</td>'      +'<td><span class="badge '+(d.org==='본사'?'badge-hq':'badge-dist')+'">'+d.org+'</span></td>'      +'<td>'+d.team+'</td>'      +'<td>'+d.job+'</td>'      +'<td style="font-weight:500;">'+d.name+(d._updated?' <span class="badge-new">재응답</span>':'')+'</td>'      +'<td style="color:var(--text2);font-size:13px;">'+phoneTxt+'</td>'      +'<td style="font-size:12px;white-space:normal;word-break:keep-all;min-width:160px;max-width:260px;line-height:1.4;">'+d.round+'</td>'      +'<td style="font-size:13px;">'+attendTxt+'</td>'      +'<td>'+actualToggle+'</td>'      +'</tr>';
     return tr;
   }).join('');
 }
