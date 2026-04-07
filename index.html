@@ -268,6 +268,10 @@
         <div class="col-row"><label>참석 여부</label><input type="number" id="col-attend" value="8" min="1"></div>
       </div>
       <div style="font-size:11px;color:var(--text3);margin-top:10px;">중복 판단 기준: 이름이 동일한 응답 중 → 타임스탬프 최신 응답만 유지</div>
+      <div style="margin-top:12px;padding:10px 12px;background:var(--amber-bg);border-radius:var(--radius);font-size:12px;color:var(--amber-text);display:flex;align-items:center;gap:10px;">
+        <span>열 매핑을 변경한 경우 각 교육의 <b>↻ 갱신</b> 버튼을 눌러야 반영됩니다.</span>
+        <button onclick="resetColMap()" style="padding:4px 10px;border:0.5px solid var(--amber);border-radius:var(--radius);background:transparent;font-size:12px;color:var(--amber-text);cursor:pointer;white-space:nowrap;font-family:inherit;">기본값으로 초기화</button>
+      </div>
     </div>
   </div>
 
@@ -292,6 +296,15 @@ var sortKey = 'ts';
 var sortAsc = false;
 
 /* ── 로컬스토리지 저장/복원 ── */
+function resetColMap(){
+  var defaults={ts:1,org:2,team:3,job:4,name:5,round:6,phone:7,attend:8};
+  Object.keys(defaults).forEach(function(k){
+    var el=document.getElementById('col-'+k);
+    if(el) el.value=defaults[k];
+  });
+  alert('기본값으로 초기화되었습니다. 각 교육의 갱신 버튼을 눌러 다시 불러오세요.');
+}
+
 function saveEduList() {
   var toSave = eduList.map(function(e){
     return {id:e.id, name:e.name, url:e.url, autoRefresh:e.autoRefresh, interval:e.interval};
@@ -698,9 +711,10 @@ function renderTable(){
       +'<button class="atg-btn'+(actVal==='출석'?' on-attend':'')+'" onclick="toggleActual('+d._i+',\'출석\')">출석</button>'
       +'<button class="atg-btn'+(actVal==='결석'?' on-absent':'')+'" onclick="toggleActual('+d._i+',\'결석\')">결석</button>'
       +'</div>';
-    var phoneVal=(d.phone||'').trim();
-    var phoneTxt=(phoneVal===''||phoneVal==='0')?'':phoneVal;
-    return '<tr'+(d._updated?' class="updated-row"':'')+'>'      +'<td style="color:var(--text3);font-size:12px;white-space:nowrap;">'+fmtTs(d.ts)+'</td>'      +'<td><span class="badge '+(d.org==='본사'?'badge-hq':'badge-dist')+'">'+d.org+'</span></td>'      +'<td>'+d.team+'</td>'      +'<td>'+d.job+'</td>'      +'<td style="font-weight:500;">'+d.name+(d._updated?' <span class="badge-new">재응답</span>':'')+' </td>'      +'<td style="color:var(--text2);font-size:13px;">'+phoneTxt+'</td>'      +'<td style="font-size:13px;">'+d.round+'</td>'      +'<td>'+attendTxt+'</td>'      +'<td>'+actualToggle+'</td>'      +'</tr>';
+    var phoneVal=(d.phone||'').trim().replace(/^0+$/, '');
+    var phoneTxt=phoneVal===''?'':phoneVal;
+    var tr = '<tr'+(d._updated?' class="updated-row"':'')+'>'      +'<td style="color:var(--text3);font-size:12px;white-space:nowrap;">'+fmtTs(d.ts)+'</td>'      +'<td><span class="badge '+(d.org==='본사'?'badge-hq':'badge-dist')+'">'+d.org+'</span></td>'      +'<td>'+d.team+'</td>'      +'<td>'+d.job+'</td>'      +'<td style="font-weight:500;">'+d.name+(d._updated?' <span class="badge-new">재응답</span>':'')+'</td>'      +'<td style="color:var(--text2);font-size:13px;">'+phoneTxt+'</td>'      +'<td style="font-size:13px;max-width:160px;overflow:hidden;text-overflow:ellipsis;">'+d.round+'</td>'      +'<td style="font-size:13px;">'+attendTxt+'</td>'      +'<td>'+actualToggle+'</td>'      +'</tr>';
+    return tr;
   }).join('');
 }
 
