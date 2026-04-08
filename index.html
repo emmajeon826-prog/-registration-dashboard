@@ -1,226 +1,231 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>교육 신청 관리 대시보드</title>
-  <style>
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-    :root{
-      --bg:#fff;--bg2:#f5f5f3;--bg3:#eeede9;
-      --text:#1a1a1a;--text2:#6b6b6b;--text3:#9a9a9a;
-      --border:rgba(0,0,0,0.11);--border2:rgba(0,0,0,0.20);
-      --radius:8px;--radius-lg:12px;
-      --green:#1D9E75;--green-bg:#E1F5EE;--green-text:#085041;
-      --red:#E24B4A;--red-bg:#FCEBEB;--red-text:#791F1F;
-      --blue:#378ADD;--blue-bg:#E6F1FB;--blue-text:#0C447C;
-      --purple-bg:#EEEDFE;--purple-text:#3C3489;
-      --amber:#BA7517;--amber-bg:#FAEEDA;--amber-text:#633806;
-    }
-    body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;background:var(--bg2);color:var(--text);min-height:100vh;}
-
-    /* ── 헤더 ── */
-    header{background:var(--bg);border-bottom:0.5px solid var(--border);padding:0 1.5rem;display:flex;align-items:center;gap:10px;height:54px;position:sticky;top:0;z-index:20;}
-    .logo{font-size:15px;font-weight:500;white-space:nowrap;}
-    .logo span{color:var(--blue);}
-    .hdr-right{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text3);}
-    .auto-badge{display:flex;align-items:center;gap:5px;font-size:11px;padding:3px 9px;border-radius:20px;background:var(--green-bg);color:var(--green-text);}
-    .pulse{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
-    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-
-    /* ── 교육 탭 바 ── */
-    .edu-bar{background:var(--bg);border-bottom:0.5px solid var(--border);padding:0 1.5rem;display:flex;align-items:center;gap:0;overflow-x:auto;position:sticky;top:54px;z-index:19;}
-    .edu-tab{padding:13px 18px;font-size:13px;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;font-family:inherit;background:transparent;border-top:none;border-left:none;border-right:none;}
-    .edu-tab:hover{color:var(--text);}
-    .edu-tab.active{color:var(--text);border-bottom-color:var(--text);font-weight:500;}
-    .edu-tab-add{padding:10px 14px;font-size:20px;color:var(--text3);cursor:pointer;background:transparent;border:none;font-family:inherit;line-height:1;}
-    .edu-tab-add:hover{color:var(--text);}
-
-    /* ── 컨테이너 / 내부 탭 ── */
-    .container{max-width:1140px;margin:0 auto;padding:1.5rem 1rem;}
-    .view-tabs{display:flex;gap:6px;margin-bottom:1.5rem;}
-    .vtab{padding:7px 18px;border-radius:var(--radius);border:0.5px solid var(--border2);background:transparent;cursor:pointer;font-size:13px;color:var(--text2);font-family:inherit;transition:all .15s;}
-    .vtab.active{background:var(--text);color:#fff;border-color:var(--text);}
-    .vsection{display:none;}.vsection.active{display:block;}
-
-    /* ── 통계 카드 ── */
-    .stat-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:1.5rem;}
-    .stat{background:var(--bg);border-radius:var(--radius);padding:1rem 1.25rem;border:0.5px solid var(--border);}
-    .stat-label{font-size:12px;color:var(--text2);margin-bottom:6px;}
-    .stat-value{font-size:26px;font-weight:500;}
-    .stat-sub{font-size:12px;color:var(--text3);margin-top:2px;}
-    .charts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.5rem;}
-    .card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;}
-    .card-title{font-size:13px;font-weight:500;color:var(--text2);margin-bottom:14px;}
-    .bar-row{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
-    .bar-label{font-size:12px;color:var(--text2);width:70px;flex-shrink:0;text-align:right;}
-    .bar-track{flex:1;height:8px;background:var(--bg2);border-radius:4px;overflow:hidden;}
-    .bar-fill{height:100%;border-radius:4px;}
-    .bar-count{font-size:12px;color:var(--text2);width:24px;text-align:right;}
-    .donut-wrap{display:flex;align-items:center;gap:20px;}
-    .legend{display:flex;flex-direction:column;gap:8px;}
-    .legend-item{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2);}
-    .legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
-    .round-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;}
-    .round-item{background:var(--bg2);border-radius:var(--radius);padding:12px;}
-    .round-name{font-size:12px;font-weight:500;margin-bottom:3px;white-space:normal;word-break:keep-all;line-height:1.4;}
-    .round-sub{font-size:11px;color:var(--text3);margin-bottom:8px;}
-    .round-bar-wrap{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-bottom:6px;}
-    .round-bar{height:100%;border-radius:2px;background:var(--green);}
-    .round-nums{display:flex;justify-content:space-between;font-size:11px;color:var(--text2);}
-
-    /* ── 명단 ── */
-    .list-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;}
-    .filter-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;}
-    .filter-row select,.filter-row input[type=text]{padding:7px 10px;font-size:13px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);font-family:inherit;}
-    .filter-row select{width:auto;}
-    .filter-row input[type=text]{width:130px;}
-    .btn-ghost{padding:7px 13px;border:0.5px solid var(--border2);border-radius:var(--radius);background:transparent;font-size:13px;color:var(--text2);cursor:pointer;font-family:inherit;white-space:nowrap;}
-    .btn-ghost:hover{background:var(--bg2);}
-    .tbl-summary{font-size:13px;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-    .tbl-summary b{color:var(--text);font-weight:500;}
-    .dedup-pill{font-size:11px;padding:2px 10px;border-radius:20px;background:var(--amber-bg);color:var(--amber-text);display:none;}
-    .table-wrap{overflow-x:auto;}
-    table{width:100%;border-collapse:collapse;font-size:13px;min-width:900px;}
-    th{font-size:11px;font-weight:500;color:var(--text2);padding:8px 10px;border-bottom:0.5px solid var(--border);text-align:left;white-space:nowrap;cursor:pointer;user-select:none;}
-    th:hover{color:var(--text);}
-    td{padding:10px;border-bottom:0.5px solid var(--border);color:var(--text);white-space:nowrap;}
-    tr:last-child td{border-bottom:none;}
-    tbody tr:hover td{background:var(--bg2);}
-    .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:var(--radius);}
-    .badge-hq{background:var(--blue-bg);color:var(--blue-text);}
-    .badge-dist{background:var(--purple-bg);color:var(--purple-text);}
-    .badge-new{background:var(--amber-bg);color:var(--amber-text);font-size:10px;padding:1px 6px;margin-left:4px;vertical-align:middle;border-radius:4px;}
-    tr.updated-row td{background:#FFFBF0;}
-    tr.updated-row:hover td{background:#FFF5DA;}
-    .attend-toggle{display:inline-flex;border-radius:var(--radius);overflow:hidden;border:0.5px solid var(--border2);}
-    .atg-btn{padding:4px 10px;font-size:12px;border:none;background:transparent;cursor:pointer;font-family:inherit;color:var(--text2);}
-    .atg-btn+.atg-btn{border-left:0.5px solid var(--border);}
-    .atg-btn.on-attend{background:var(--green-bg);color:var(--green-text);font-weight:500;}
-    .atg-btn.on-absent{background:var(--red-bg);color:var(--red-text);font-weight:500;}
-    .atg-btn.none-btn{font-size:14px;color:var(--text3);}
-    .no-data{text-align:center;padding:3rem;color:var(--text3);font-size:14px;}
-
-    /* ── 교육 관리(설정) ── */
-    .edu-manage-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1rem;}
-    .edu-manage-title{font-size:15px;font-weight:500;margin-bottom:4px;}
-    .edu-manage-sub{font-size:13px;color:var(--text2);margin-bottom:1rem;line-height:1.6;}
-    .edu-list-table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:1rem;}
-    .edu-list-table th{font-size:11px;font-weight:500;color:var(--text2);padding:8px 10px;border-bottom:0.5px solid var(--border);text-align:left;}
-    .edu-list-table td{padding:10px;border-bottom:0.5px solid var(--border);vertical-align:middle;}
-    .edu-list-table tr:last-child td{border-bottom:none;}
-    .edu-name-input,.edu-url-input{padding:7px 10px;font-size:13px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);font-family:inherit;}
-    .edu-name-input{width:160px;}
-    .edu-url-input{width:100%;min-width:200px;}
-    .auto-check{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer;}
-    .auto-check input{width:15px;height:15px;cursor:pointer;}
-    .interval-sel{padding:5px 8px;font-size:12px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);font-family:inherit;}
-    .btn-sm{padding:5px 12px;border:0.5px solid var(--border2);border-radius:var(--radius);background:transparent;font-size:12px;color:var(--text2);cursor:pointer;font-family:inherit;white-space:nowrap;}
-    .btn-sm:hover{background:var(--bg2);}
-    .btn-sm.danger:hover{background:var(--red-bg);color:var(--red-text);border-color:var(--red);}
-    .btn-primary{padding:9px 20px;border:none;border-radius:var(--radius);background:var(--text);color:#fff;font-size:14px;cursor:pointer;font-family:inherit;white-space:nowrap;}
-    .btn-primary:hover{opacity:.82;}
-    .add-edu-form{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;}
-    .add-edu-form .field{display:flex;flex-direction:column;gap:4px;}
-    .add-edu-form label{font-size:11px;color:var(--text2);}
-    .status-row{font-size:12px;margin-top:6px;min-height:16px;}
-    .status-ok{color:var(--green);}.status-err{color:var(--red);}.status-loading{color:var(--text3);}
-    .col-map{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
-    .col-row{display:flex;align-items:center;gap:8px;font-size:13px;}
-    .col-row label{color:var(--text2);min-width:80px;}
-    .col-row input[type=number]{width:64px;padding:6px 8px;font-size:13px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);font-family:inherit;text-align:center;}
-    .empty-state{text-align:center;padding:4rem 2rem;color:var(--text3);}
-    .empty-state-icon{font-size:32px;margin-bottom:12px;}
-    .empty-state-title{font-size:15px;font-weight:500;color:var(--text2);margin-bottom:6px;}
-    .empty-state-sub{font-size:13px;line-height:1.6;}
-    @media(max-width:640px){
-      .stat-grid{grid-template-columns:repeat(2,1fr);}
-      .charts{grid-template-columns:1fr;}
-      .round-grid{grid-template-columns:repeat(2,1fr);}
-      .col-map{grid-template-columns:1fr;}
-    }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>교육 신청 관리 대시보드</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#fff;--bg2:#f5f5f3;--bg3:#e8e8e5;
+  --text:#1a1a1a;--text2:#6b6b6b;--text3:#9a9a9a;
+  --border:rgba(0,0,0,0.11);--border2:rgba(0,0,0,0.20);
+  --r:8px;--rlg:12px;
+  --green:#1D9E75;--gbg:#E1F5EE;--gtxt:#085041;
+  --red:#E24B4A;--rbg:#FCEBEB;--rtxt:#791F1F;
+  --blue:#378ADD;--bbg:#E6F1FB;--btxt:#0C447C;
+  --pbg:#EEEDFE;--ptxt:#3C3489;
+  --amber:#BA7517;--abg:#FAEEDA;--atxt:#633806;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;background:var(--bg2);color:var(--text);min-height:100vh;}
+
+/* 헤더 */
+header{background:var(--bg);border-bottom:0.5px solid var(--border);padding:0 1.5rem;display:flex;align-items:center;gap:10px;height:52px;position:sticky;top:0;z-index:30;}
+.logo{font-size:15px;font-weight:500;}
+.logo span{color:var(--blue);}
+.hdr-r{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3);}
+.pulse-badge{display:none;align-items:center;gap:5px;font-size:11px;padding:3px 9px;border-radius:20px;background:var(--gbg);color:var(--gtxt);}
+.pulse-badge.on{display:flex;}
+.pulse{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+/* 교육 탭 바 */
+.edu-bar{background:var(--bg);border-bottom:0.5px solid var(--border);padding:0 1.5rem;display:flex;align-items:center;overflow-x:auto;position:sticky;top:52px;z-index:29;}
+.etab{padding:12px 16px;font-size:13px;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;background:transparent;border-top:none;border-left:none;border-right:none;font-family:inherit;transition:all .15s;}
+.etab:hover{color:var(--text);}
+.etab.on{color:var(--text);border-bottom-color:var(--text);font-weight:500;}
+.etab-add{padding:10px 14px;font-size:18px;color:var(--text3);cursor:pointer;background:transparent;border:none;font-family:inherit;flex-shrink:0;}
+.etab-add:hover{color:var(--text);}
+
+/* 컨테이너 */
+.wrap{max-width:1200px;margin:0 auto;padding:1.25rem 1rem;}
+.vtabs{display:flex;gap:6px;margin-bottom:1.25rem;}
+.vtab{padding:7px 16px;border-radius:var(--r);border:0.5px solid var(--border2);background:transparent;cursor:pointer;font-size:13px;color:var(--text2);font-family:inherit;transition:all .15s;}
+.vtab.on{background:var(--text);color:#fff;border-color:var(--text);}
+.vs{display:none;}.vs.on{display:block;}
+
+/* 통계 */
+.sgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:1.25rem;}
+.scard{background:var(--bg);border-radius:var(--r);padding:1rem 1.25rem;border:0.5px solid var(--border);}
+.slabel{font-size:12px;color:var(--text2);margin-bottom:6px;}
+.sval{font-size:26px;font-weight:500;}
+.ssub{font-size:12px;color:var(--text3);margin-top:2px;}
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.25rem;}
+.card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rlg);padding:1.25rem;}
+.ctitle{font-size:13px;font-weight:500;color:var(--text2);margin-bottom:12px;}
+.brow{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.blabel{font-size:12px;color:var(--text2);width:70px;flex-shrink:0;text-align:right;}
+.btrack{flex:1;height:8px;background:var(--bg2);border-radius:4px;overflow:hidden;}
+.bfill{height:100%;border-radius:4px;}
+.bcnt{font-size:12px;color:var(--text2);width:24px;text-align:right;}
+.dwrap{display:flex;align-items:center;gap:16px;}
+.dlegend{display:flex;flex-direction:column;gap:6px;}
+.dleg{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text2);}
+.ddot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.rgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
+.ritem{background:var(--bg2);border-radius:var(--r);padding:10px 12px;}
+.rname{font-size:11px;font-weight:500;margin-bottom:2px;white-space:normal;word-break:keep-all;line-height:1.4;}
+.rsub{font-size:11px;color:var(--text3);margin-bottom:6px;}
+.rbar{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-bottom:4px;}
+.rbfill{height:100%;border-radius:2px;background:var(--green);}
+.rnums{display:flex;justify-content:space-between;font-size:11px;color:var(--text2);}
+
+/* 명단 */
+.lcard{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rlg);padding:1.25rem;}
+.frow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;}
+.frow select,.frow input[type=text]{padding:7px 10px;font-size:13px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);font-family:inherit;}
+.frow select{width:auto;}
+.frow input[type=text]{width:120px;}
+.btn-g{padding:7px 12px;border:0.5px solid var(--border2);border-radius:var(--r);background:transparent;font-size:13px;color:var(--text2);cursor:pointer;font-family:inherit;white-space:nowrap;}
+.btn-g:hover{background:var(--bg2);}
+.btn-xl{padding:8px 14px;border:none;border-radius:var(--r);background:var(--green);color:#fff;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;white-space:nowrap;}
+.btn-xl:hover{opacity:.85;}
+.summary{font-size:13px;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.summary b{color:var(--text);font-weight:500;}
+.dpill{font-size:11px;padding:2px 10px;border-radius:20px;background:var(--abg);color:var(--atxt);display:none;}
+.twrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:860px;}
+th{font-size:11px;font-weight:500;color:var(--text2);padding:8px 10px;border-bottom:0.5px solid var(--border);text-align:left;white-space:nowrap;cursor:pointer;user-select:none;background:var(--bg);}
+th:hover{color:var(--text);}
+td{padding:9px 10px;border-bottom:0.5px solid var(--border);color:var(--text);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:var(--bg2);}
+tbody tr.re td{background:#FFFBF0;}
+tbody tr.re:hover td{background:#FFF4D4;}
+.badge{display:inline-block;font-size:11px;padding:2px 7px;border-radius:var(--r);}
+.hq{background:var(--bbg);color:var(--btxt);}
+.dist{background:var(--pbg);color:var(--ptxt);}
+.re-badge{background:var(--abg);color:var(--atxt);font-size:10px;padding:1px 6px;border-radius:4px;margin-left:4px;vertical-align:middle;}
+.atoggle{display:inline-flex;border-radius:var(--r);overflow:hidden;border:0.5px solid var(--border2);}
+.abtn{padding:5px 10px;font-size:12px;border:none;background:transparent;cursor:pointer;font-family:inherit;color:var(--text2);}
+.abtn+.abtn{border-left:0.5px solid var(--border);}
+.abtn.yes{background:var(--gbg);color:var(--gtxt);font-weight:500;}
+.abtn.no{background:var(--rbg);color:var(--rtxt);font-weight:500;}
+.no-data{text-align:center;padding:3rem;color:var(--text3);font-size:14px;}
+
+/* 관리 */
+.mcard{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rlg);padding:1.5rem;margin-bottom:1rem;}
+.mtitle{font-size:15px;font-weight:500;margin-bottom:4px;}
+.msub{font-size:13px;color:var(--text2);margin-bottom:1rem;line-height:1.6;}
+.addform{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;}
+.addform .f{display:flex;flex-direction:column;gap:4px;}
+.addform label{font-size:11px;color:var(--text2);}
+.nameinput{padding:8px 10px;font-size:13px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);font-family:inherit;width:160px;}
+.urlinput{padding:8px 10px;font-size:13px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);font-family:inherit;width:100%;min-width:220px;}
+.btn-p{padding:9px 18px;border:none;border-radius:var(--r);background:var(--text);color:#fff;font-size:14px;cursor:pointer;font-family:inherit;white-space:nowrap;}
+.btn-p:hover{opacity:.82;}
+.statusrow{font-size:12px;margin-top:6px;min-height:16px;}
+.ok{color:var(--green);}.err{color:var(--red);}.loading{color:var(--text3);}
+
+/* 교육 목록 행 */
+.elist-row{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:13px 0;border-bottom:0.5px solid var(--border);}
+.elist-row:last-child{border-bottom:none;}
+.ename{font-size:14px;font-weight:500;flex:1;min-width:100px;}
+.esync{font-size:12px;color:var(--text3);min-width:80px;}
+.ecnt{font-size:13px;min-width:80px;}
+.eauto{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--text2);}
+.eauto input{width:15px;height:15px;cursor:pointer;}
+.isel{padding:5px 8px;font-size:12px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);font-family:inherit;}
+.ebtngroup{display:flex;gap:6px;flex-shrink:0;}
+.btn-s{padding:5px 12px;border:0.5px solid var(--border2);border-radius:var(--r);background:transparent;font-size:12px;color:var(--text2);cursor:pointer;font-family:inherit;white-space:nowrap;}
+.btn-s:hover{background:var(--bg2);}
+.btn-del{border-color:var(--red);color:var(--rtxt);background:var(--rbg);}
+.btn-del:hover{opacity:.8;}
+
+/* 열 매핑 */
+.colmap{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+.colrow{display:flex;align-items:center;gap:8px;font-size:13px;}
+.colrow label{color:var(--text2);min-width:90px;}
+.colrow input[type=number]{width:60px;padding:5px 8px;font-size:13px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);font-family:inherit;text-align:center;}
+.colnote{font-size:11px;color:var(--text3);margin-top:8px;line-height:1.6;}
+
+.empty{text-align:center;padding:4rem 2rem;color:var(--text3);}
+.empty-ico{font-size:28px;margin-bottom:10px;}
+.empty-t{font-size:15px;font-weight:500;color:var(--text2);margin-bottom:4px;}
+.empty-s{font-size:13px;line-height:1.6;}
+
+.info-box{background:var(--bbg);border:0.5px solid rgba(55,138,221,.3);border-radius:var(--r);padding:10px 14px;font-size:13px;color:var(--btxt);line-height:1.7;margin-bottom:1rem;}
+.info-box b{font-weight:500;}
+
+@media(max-width:640px){
+  .sgrid{grid-template-columns:repeat(2,1fr);}
+  .charts{grid-template-columns:1fr;}
+  .rgrid{grid-template-columns:repeat(2,1fr);}
+  .colmap{grid-template-columns:1fr;}
+}
+</style>
 </head>
 <body>
 
 <header>
   <div class="logo">교육 신청 <span>관리 대시보드</span></div>
-  <div class="hdr-right">
-    <span id="auto-badge" class="auto-badge" style="display:none">
-      <span class="pulse"></span>자동 새로고침 중
-    </span>
-    <span id="sync-info" style="font-size:12px;color:var(--text3);">교육을 선택하세요</span>
-    <span id="cache-notice" style="display:none;font-size:11px;color:var(--amber);background:var(--amber-bg);padding:3px 9px;border-radius:20px;">구글 시트 반영까지 최대 5분 소요</span>
+  <div class="hdr-r">
+    <div class="pulse-badge" id="pb"><span class="pulse"></span>자동 새로고침 중</div>
+    <span id="sync-txt">교육을 선택하세요</span>
   </div>
 </header>
 
-<!-- 교육 탭 바 -->
 <div class="edu-bar" id="edu-bar">
-  <button class="edu-tab-add" onclick="switchView('manage')" title="교육 추가/관리">＋</button>
+  <button class="etab-add" onclick="goManage()" title="교육 추가">＋</button>
 </div>
 
-<div class="container">
+<div class="wrap">
 
-  <!-- 내부 뷰 탭 -->
-  <div class="view-tabs" id="view-tabs" style="display:none">
-    <button class="vtab active" onclick="switchVTab('stats')">현황 통계</button>
-    <button class="vtab" onclick="switchVTab('list')">신청자 명단</button>
-    <button class="vtab" onclick="switchVTab('manage')">교육 관리</button>
+  <div class="vtabs" id="vtabs" style="display:none">
+    <button class="vtab on" onclick="goTab('stats')">현황 통계</button>
+    <button class="vtab" onclick="goTab('list')">신청자 명단</button>
+    <button class="vtab" onclick="goTab('manage')">교육 관리</button>
   </div>
-  <div class="view-tabs" id="view-tabs-manage" style="display:none">
-    <button class="vtab active" onclick="switchVTab('manage')">교육 관리</button>
+  <div class="vtabs" id="vtabs-m" style="display:none">
+    <button class="vtab on" onclick="goTab('manage')">교육 관리</button>
   </div>
 
   <!-- 현황 통계 -->
-  <div class="vsection" id="vsec-stats">
-    <div class="stat-grid">
-      <div class="stat"><div class="stat-label">총 신청 인원</div><div class="stat-value" id="st-total">0</div><div class="stat-sub">명 (중복 제거)</div></div>
-      <div class="stat"><div class="stat-label">신청 참석 예정</div><div class="stat-value" id="st-attend" style="color:var(--green)">0</div><div class="stat-sub">명</div></div>
-      <div class="stat"><div class="stat-label">신청 불참</div><div class="stat-value" id="st-absent" style="color:var(--red)">0</div><div class="stat-sub">명</div></div>
-      <div class="stat"><div class="stat-label">실제 출석 체크</div><div class="stat-value" id="st-actual" style="color:var(--blue)">0</div><div class="stat-sub">명 출석 확인</div></div>
-      <div class="stat"><div class="stat-label">신청 참석률</div><div class="stat-value" id="st-rate">0%</div><div class="stat-sub">전체 대비</div></div>
+  <div class="vs" id="vs-stats">
+    <div class="sgrid">
+      <div class="scard"><div class="slabel">총 신청 인원</div><div class="sval" id="s-total">0</div><div class="ssub">명 (중복 제거)</div></div>
+      <div class="scard"><div class="slabel">신청 참석</div><div class="sval" id="s-attend" style="color:var(--green)">0</div><div class="ssub">명</div></div>
+      <div class="scard"><div class="slabel">신청 불참석</div><div class="sval" id="s-absent" style="color:var(--red)">0</div><div class="ssub">명</div></div>
+      <div class="scard"><div class="slabel">실제 출석 확인</div><div class="sval" id="s-actual" style="color:var(--blue)">0</div><div class="ssub">명 체크됨</div></div>
     </div>
     <div class="charts">
-      <div class="card"><div class="card-title">소속별 신청 현황</div><div class="donut-wrap"><canvas id="donut-chart" width="110" height="110"></canvas><div class="legend" id="org-legend"></div></div></div>
-      <div class="card"><div class="card-title">직무별 신청 인원</div><div id="job-bars"></div></div>
+      <div class="card"><div class="ctitle">소속별 신청 현황</div><div class="dwrap"><canvas id="donut" width="110" height="110"></canvas><div class="dlegend" id="dleg"></div></div></div>
+      <div class="card"><div class="ctitle">직무별 신청 인원</div><div id="jbars"></div></div>
     </div>
-    <div class="card"><div class="card-title">차수별 신청 현황</div><div class="round-grid" id="round-grid"></div></div>
+    <div class="card"><div class="ctitle">차수별 신청 현황</div><div class="rgrid" id="rgrid"></div></div>
   </div>
 
   <!-- 신청자 명단 -->
-  <div class="vsection" id="vsec-list">
-    <div class="list-card">
-      <div class="filter-row">
+  <div class="vs" id="vs-list">
+    <div class="lcard">
+      <div class="frow">
         <select id="fl-org" onchange="renderTable()"><option value="">전체 소속</option><option>본사</option><option>유통망</option></select>
-        <select id="fl-round" onchange="renderTable()" style="max-width:280px;"><option value="">전체 차수</option></select>
-        <select id="fl-attend" onchange="renderTable()"><option value="">신청 참석여부 전체</option><option>참석</option><option>불참</option><option>불참석</option></select>
-        <select id="fl-actual" onchange="renderTable()"><option value="">실제 출석 전체</option><option value="출석">출석</option><option value="결석">결석</option><option value="">미체크</option></select>
-        <select id="fl-updated" onchange="renderTable()"><option value="">전체</option><option value="yes">재응답만</option></select>
-        <input type="text" id="fl-search" placeholder="이름 검색" oninput="renderTable()"/>
-        <button class="btn-ghost" onclick="manualRefresh()">↻ 새로고침</button>
-        <button class="btn-ghost" onclick="exportExcel()" style="margin-left:auto;background:var(--green-bg);color:var(--green-text);border-color:var(--green);">엑셀 다운로드 ↗</button>
+        <select id="fl-round" onchange="renderTable()" style="max-width:260px;"><option value="">전체 차수</option></select>
+        <select id="fl-attend" onchange="renderTable()"><option value="">참석여부 전체</option><option>참석</option><option>불참석</option></select>
+        <select id="fl-re" onchange="renderTable()"><option value="">전체</option><option value="1">재응답만</option></select>
+        <input type="text" id="fl-name" placeholder="이름 검색" oninput="renderTable()"/>
+        <button class="btn-g" onclick="manualRefresh()">↻ 새로고침</button>
+        <button class="btn-xl" onclick="exportExcel()" style="margin-left:auto;">엑셀 다운로드 ↗</button>
       </div>
-      <div class="tbl-summary" id="tbl-summary">
-        <span id="sum-text"></span>
-        <span class="dedup-pill" id="dedup-pill"></span>
+      <div class="summary">
+        <span id="sum-txt"></span>
+        <span class="dpill" id="dpill"></span>
       </div>
-      <div class="table-wrap">
+      <div class="twrap">
         <table>
-          <thead>
-            <tr>
-              <th onclick="sortBy('ts')">응답 시간 <span id="arr-ts">↕</span></th>
-              <th onclick="sortBy('org')">소속 <span id="arr-org">↕</span></th>
-              <th onclick="sortBy('team')">팀/유통망 <span id="arr-team">↕</span></th>
-              <th onclick="sortBy('job')">직무 <span id="arr-job">↕</span></th>
-              <th onclick="sortBy('name')">이름 <span id="arr-name">↕</span></th>
-              <th onclick="sortBy('phone')">연락처 <span id="arr-phone">↕</span></th>
-              <th onclick="sortBy('round')">차수 <span id="arr-round">↕</span></th>
-              <th>신청 참석여부</th>
-              <th>실제 출석 체크 ✎</th>
-            </tr>
-          </thead>
-          <tbody id="tbl-body"></tbody>
+          <thead><tr>
+            <th onclick="sortBy('ts')">응답 시간 <span id="a-ts">↕</span></th>
+            <th onclick="sortBy('org')">소속 <span id="a-org">↕</span></th>
+            <th onclick="sortBy('team')">팀/유통망 <span id="a-team">↕</span></th>
+            <th onclick="sortBy('job')">직무 <span id="a-job">↕</span></th>
+            <th onclick="sortBy('name')">이름 <span id="a-name">↕</span></th>
+            <th>연락처</th>
+            <th onclick="sortBy('round')">차수 <span id="a-round">↕</span></th>
+            <th>신청 참석여부</th>
+            <th>실제 출석 체크 ✎</th>
+          </tr></thead>
+          <tbody id="tbody"></tbody>
         </table>
         <div class="no-data" id="no-data" style="display:none">신청 내역이 없습니다.</div>
       </div>
@@ -228,628 +233,634 @@
   </div>
 
   <!-- 교육 관리 -->
-  <div class="vsection" id="vsec-manage">
+  <div class="vs" id="vs-manage">
 
-    <!-- 새 교육 추가 -->
-    <div class="edu-manage-card">
-      <div class="edu-manage-title">새 교육 추가</div>
-      <div class="edu-manage-sub">교육 이름과 구글 시트 CSV URL을 입력하면 탭으로 관리됩니다. URL은 한 번만 등록하면 이후 자동으로 불러와요.</div>
-      <div class="add-edu-form">
-        <div class="field">
-          <label>교육 이름</label>
-          <input type="text" id="new-edu-name" class="edu-name-input" placeholder="예) GBD 의자교육"/>
-        </div>
-        <div class="field" style="flex:1;min-width:220px">
-          <label>구글 시트 CSV URL</label>
-          <input type="text" id="new-edu-url" class="edu-url-input" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv"/>
-        </div>
-        <button class="btn-primary" onclick="addEdu()">추가</button>
-      </div>
-      <div class="status-row" id="add-status"></div>
+    <div class="info-box">
+      <b>자동 중복 처리 방식</b><br>
+      <b>C열(팀/유통망) + E열(이름)</b>이 동일한 응답이 여러 개면 → <b>A열(타임스탬프) 기준 가장 최신 응답만</b> 반영합니다.<br>
+      재신청한 경우 이름 옆에 <span style="background:var(--abg);color:var(--atxt);font-size:11px;padding:1px 7px;border-radius:4px;">재응답</span> 배지가 표시됩니다.
     </div>
 
-    <!-- 등록된 교육 목록 -->
-    <div class="edu-manage-card">
-      <div class="edu-manage-title">등록된 교육 목록</div>
-      <div class="edu-manage-sub">자동 새로고침을 켜두면 구글 폼에 새 응답이 들어올 때마다 자동으로 반영됩니다.</div>
-      <div id="edu-list-wrap"></div>
+    <div class="mcard">
+      <div class="mtitle">새 교육 추가</div>
+      <div class="msub">교육 이름과 구글 시트 CSV URL을 입력하면 탭으로 관리됩니다. URL은 한 번만 등록하면 브라우저에 저장되어 계속 유지됩니다.</div>
+      <div class="addform">
+        <div class="f"><label>교육 이름</label><input type="text" id="new-name" class="nameinput" placeholder="예) GBD 의자교육"/></div>
+        <div class="f" style="flex:1;min-width:220px"><label>구글 시트 CSV URL</label><input type="text" id="new-url" class="urlinput" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv"/></div>
+        <button class="btn-p" onclick="addEdu()">추가</button>
+      </div>
+      <div class="statusrow" id="add-st"></div>
     </div>
 
-    <!-- 열 매핑 -->
-    <div class="edu-manage-card">
-      <div class="edu-manage-title">열(컬럼) 매핑</div>
-      <div class="edu-manage-sub">구글 폼 응답 시트의 열 순서에 맞게 설정하세요. 모든 교육에 공통 적용됩니다.</div>
-      <div class="col-map">
-        <div class="col-row"><label>타임스탬프</label><input type="number" id="col-ts" value="1" min="1"></div>
-        <div class="col-row"><label>소속</label><input type="number" id="col-org" value="2" min="1"></div>
-        <div class="col-row"><label>팀/유통망</label><input type="number" id="col-team" value="3" min="1"></div>
-        <div class="col-row"><label>직무</label><input type="number" id="col-job" value="4" min="1"></div>
-        <div class="col-row"><label>이름</label><input type="number" id="col-name" value="5" min="1"></div>
-        <div class="col-row"><label>교육 차수</label><input type="number" id="col-round" value="6" min="1"></div>
-        <div class="col-row"><label>연락처</label><input type="number" id="col-phone" value="7" min="1"></div>
-        <div class="col-row"><label>참석 여부</label><input type="number" id="col-attend" value="8" min="1"></div>
+    <div class="mcard">
+      <div class="mtitle">등록된 교육 목록</div>
+      <div class="msub">자동 새로고침을 켜두면 구글 시트가 업데이트될 때 자동 반영됩니다. (구글 캐시 특성상 최대 5분 지연)</div>
+      <div id="elist"></div>
+    </div>
+
+    <div class="mcard">
+      <div class="mtitle">열(컬럼) 매핑</div>
+      <div class="msub">구글 폼 응답 시트 기준으로 설정하세요. 변경 후 각 교육의 갱신 버튼을 눌러야 반영됩니다.</div>
+      <div class="colmap">
+        <div class="colrow"><label>A열 타임스탬프</label><input type="number" id="c-ts" value="1" min="1"></div>
+        <div class="colrow"><label>B열 소속</label><input type="number" id="c-org" value="2" min="1"></div>
+        <div class="colrow"><label>C열 팀/유통망</label><input type="number" id="c-team" value="3" min="1"></div>
+        <div class="colrow"><label>D열 직무</label><input type="number" id="c-job" value="4" min="1"></div>
+        <div class="colrow"><label>E열 이름</label><input type="number" id="c-name" value="5" min="1"></div>
+        <div class="colrow"><label>F열 교육차수</label><input type="number" id="c-round" value="6" min="1"></div>
+        <div class="colrow"><label>G열 연락처</label><input type="number" id="c-phone" value="7" min="1"></div>
+        <div class="colrow"><label>H열 참석여부</label><input type="number" id="c-attend" value="8" min="1"></div>
       </div>
-      <div style="font-size:11px;color:var(--text3);margin-top:10px;">중복 판단 기준: 이름이 동일한 응답 중 → 타임스탬프 최신 응답만 유지</div>
-      <div style="margin-top:12px;padding:10px 12px;background:var(--amber-bg);border-radius:var(--radius);font-size:12px;color:var(--amber-text);display:flex;align-items:center;gap:10px;">
-        <span>열 매핑을 변경한 경우 각 교육의 <b>↻ 갱신</b> 버튼을 눌러야 반영됩니다.</span>
-        <button onclick="resetColMap()" style="padding:4px 10px;border:0.5px solid var(--amber);border-radius:var(--radius);background:transparent;font-size:12px;color:var(--amber-text);cursor:pointer;white-space:nowrap;font-family:inherit;">기본값으로 초기화</button>
+      <div class="colnote">
+        중복 판단 기준: <b>C열(팀/유통망) + E열(이름)</b> 조합이 같으면 동일인 → 타임스탬프 최신 응답만 유지
       </div>
     </div>
   </div>
 
-  <!-- 빈 상태 -->
-  <div id="empty-state" class="empty-state">
-    <div class="empty-state-icon">📋</div>
-    <div class="empty-state-title">등록된 교육이 없습니다</div>
-    <div class="empty-state-sub">오른쪽 상단 <strong>+</strong> 버튼을 눌러<br>첫 번째 교육을 추가해 보세요.</div>
+  <div class="empty" id="empty">
+    <div class="empty-ico">📋</div>
+    <div class="empty-t">등록된 교육이 없습니다</div>
+    <div class="empty-s">오른쪽 상단 <b>+</b> 버튼을 눌러<br>첫 번째 교육을 추가해 보세요.</div>
   </div>
 
 </div>
 
 <script>
-/* ═══════════════════════════════════════
-   데이터 구조
-   eduList: [{id, name, url, autoRefresh, interval, data:[], deduped:[], dedupCount, lastSync, timerId}]
-═══════════════════════════════════════ */
-var eduList = [];
-var activeEduId = null;
-var activeVTab = 'stats';
-var sortKey = 'ts';
-var sortAsc = false;
+/* ======================================================
+   상태
+====================================================== */
+var EDU = [];          // [{id,name,url,auto,interval,rows,deduped,dedupCount,lastSync,timer}]
+var CUR = null;        // 현재 선택된 edu id
+var VTAB = 'stats';
+var SKEY = 'ts';
+var SASC = false;
 
-/* ── 로컬스토리지 저장/복원 ── */
-function resetColMap(){
-  var defaults={ts:1,org:2,team:3,job:4,name:5,round:6,phone:7,attend:8};
-  Object.keys(defaults).forEach(function(k){
-    var el=document.getElementById('col-'+k);
-    if(el) el.value=defaults[k];
-  });
-  alert('기본값으로 초기화되었습니다. 각 교육의 갱신 버튼을 눌러 다시 불러오세요.');
+/* ======================================================
+   로컬스토리지 - 교육 목록 + 열 매핑 저장/복원
+====================================================== */
+function saveEdu(){
+  var d = EDU.map(function(e){return{id:e.id,name:e.name,url:e.url,auto:e.auto,interval:e.interval};});
+  try{localStorage.setItem('edu_v2',JSON.stringify(d));}catch(_){}
 }
-
-function saveEduList() {
-  var toSave = eduList.map(function(e){
-    return {id:e.id, name:e.name, url:e.url, autoRefresh:e.autoRefresh, interval:e.interval};
-  });
-  try { localStorage.setItem('eduList', JSON.stringify(toSave)); } catch(e){}
-}
-function loadEduList() {
-  try {
-    var saved = JSON.parse(localStorage.getItem('eduList')||'[]');
-    saved.forEach(function(s){
-      eduList.push({id:s.id, name:s.name, url:s.url, autoRefresh:s.autoRefresh||false, interval:s.interval||5, data:[], deduped:[], dedupCount:0, lastSync:'', timerId:null});
+function loadEdu(){
+  try{
+    var d=JSON.parse(localStorage.getItem('edu_v2')||'[]');
+    d.forEach(function(s){
+      EDU.push({id:s.id,name:s.name,url:s.url,auto:!!s.auto,interval:s.interval||5,
+                rows:[],deduped:[],dedupCount:0,lastSync:'',timer:null});
     });
-  } catch(e){}
+  }catch(_){}
 }
-
-/* ── 유틸 ── */
-function getCol(id){ return parseInt(document.getElementById(id).value||1)-1; }
-
-/* 한국어 타임스탬프 파싱: "2026. 4. 3 오후 4:36:56" → Date */
-function parseKoTs(ts){
-  if(!ts) return new Date(0);
-  /* ISO 형식이면 그냥 파싱 */
-  var d = new Date(ts);
-  if(!isNaN(d)) return d;
-  /* 한국어 형식 파싱 */
-  var m = ts.match(/(\d{4})[.\s]+(\d{1,2})[.\s]+(\d{1,2})[.\s]*(오전|오후)?\s*(\d{1,2}):(\d{2})(?::(\d{2}))?/);
-  if(!m) return new Date(0);
-  var yr=parseInt(m[1]), mo=parseInt(m[2])-1, dy=parseInt(m[3]);
-  var ampm=m[4], hr=parseInt(m[5]), mn=parseInt(m[6]), sc=parseInt(m[7]||0);
-  if(ampm==='오후' && hr<12) hr+=12;
-  if(ampm==='오전' && hr===12) hr=0;
-  return new Date(yr, mo, dy, hr, mn, sc);
+function saveCol(){
+  var ids=['ts','org','team','job','name','round','phone','attend'];
+  var d={};
+  ids.forEach(function(k){var el=document.getElementById('c-'+k);if(el)d[k]=el.value;});
+  try{localStorage.setItem('col_v2',JSON.stringify(d));}catch(_){}
 }
+function loadCol(){
+  try{
+    var d=JSON.parse(localStorage.getItem('col_v2')||'{}');
+    Object.keys(d).forEach(function(k){var el=document.getElementById('c-'+k);if(el)el.value=d[k];});
+  }catch(_){}
+}
+function col(k){return parseInt(document.getElementById('c-'+k).value||1)-1;}
 
-function splitCSVLine(line){
-  var r=[],cur='',inQ=false;
+/* ======================================================
+   CSV 파싱
+====================================================== */
+function splitLine(line){
+  var r=[],cur='',q=false;
   for(var i=0;i<line.length;i++){
     var ch=line[i];
-    if(ch==='"'){inQ=!inQ;}
-    else if(ch===','&&!inQ){r.push(cur.trim());cur='';}
+    if(ch==='"'){q=!q;}
+    else if(ch===','&&!q){r.push(cur.trim());cur='';}
     else{cur+=ch;}
   }
-  r.push(cur.trim()); return r;
+  r.push(cur.trim());
+  return r;
 }
-
 function parseCSV(text){
   var lines=text.trim().split('\n');
   if(lines.length<2) return [];
-  return lines.slice(1).map(function(line){
-    var c=splitCSVLine(line);
+  return lines.slice(1).map(function(ln){
+    var c=splitLine(ln);
     return{
-      ts:c[getCol('col-ts')]||'',
-      org:c[getCol('col-org')]||'',
-      team:c[getCol('col-team')]||'',
-      job:c[getCol('col-job')]||'',
-      name:c[getCol('col-name')]||'',
-      round:c[getCol('col-round')]||'',
-      attend:c[getCol('col-attend')]||'미정',
-      phone:c[getCol('col-phone')]||''
+      ts:   c[col('ts')]  ||'',
+      org:  c[col('org')] ||'',
+      team: c[col('team')]||'',
+      job:  c[col('job')] ||'',
+      name: c[col('name')]||'',
+      round:c[col('round')]||'',
+      phone:c[col('phone')]||'',
+      attend:c[col('attend')]||'미정'
     };
-  }).filter(function(d){return d.name.trim();});
+  }).filter(function(d){return (d.name||'').trim()!=='';});
 }
 
-function deduplicate(rows){
-  /* 이름+연락처 조합으로 그룹 (연락처 없으면 이름만) */
+/* ======================================================
+   한국어 타임스탬프 파싱
+   "2026. 4. 3 오후 4:36:56" → Date
+====================================================== */
+function parseTs(ts){
+  if(!ts) return new Date(0);
+  var d=new Date(ts);
+  if(!isNaN(d.getTime())&&d.getFullYear()>1980) return d;
+  var m=ts.match(/(\d{4})[.\s]+(\d{1,2})[.\s]+(\d{1,2})[.\s]*(오전|오후)?\s*(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if(!m) return new Date(0);
+  var yr=+m[1],mo=+m[2]-1,dy=+m[3],ampm=m[4],hr=+m[5],mn=+m[6],sc=+(m[7]||0);
+  if(ampm==='오후'&&hr<12) hr+=12;
+  if(ampm==='오전'&&hr===12) hr=0;
+  return new Date(yr,mo,dy,hr,mn,sc);
+}
+function fmtTs(ts){
+  var d=parseTs(ts);
+  if(!d||d.getTime()===0) return ts||'-';
+  return (d.getMonth()+1)+'/'+d.getDate()+' '
+    +String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+}
+
+/* ======================================================
+   핵심: 중복 제거
+   기준 = C열(team) + E열(name)
+   → 그룹 내 A열(ts) 최신 1건만 남김
+====================================================== */
+function dedup(rows){
   var groups={};
-  rows.forEach(function(row){
-    var name=(row.name||'').trim();
+  rows.forEach(function(r){
+    var team=(r.team||'').trim();
+    var name=(r.name||'').trim();
     if(!name) return;
-    var phone=(row.phone||'').trim().replace(/^0+$/,'');
-    var key=phone?name+'::'+phone:name;
+    var key=team+'|||'+name;          // C열+E열 조합
     if(!groups[key]) groups[key]=[];
-    groups[key].push(row);
+    groups[key].push(r);
   });
   var result=[];
   Object.keys(groups).forEach(function(key){
-    var group=groups[key];
-    /* 타임스탬프 기준 오름차순 정렬 → 마지막이 최신 */
-    group.sort(function(a,b){return parseKoTs(a.ts)-parseKoTs(b.ts);});
-    var latest=group[group.length-1];
-    result.push(Object.assign({},latest,{
-      _updated:group.length>1,
-      _prevTs:group.length>1?parseKoTs(group[group.length-2].ts):null
-    }));
+    var g=groups[key];
+    /* A열 타임스탬프 기준 오름차순 → 마지막이 최신 */
+    g.sort(function(a,b){return parseTs(a.ts)-parseTs(b.ts);});
+    var latest=Object.assign({},g[g.length-1]);
+    latest._re=(g.length>1);   // 재응답 여부
+    result.push(latest);
   });
-  /* 전체를 최신순 정렬 */
-  result.sort(function(a,b){return parseKoTs(b.ts)-parseKoTs(a.ts);});
-  var count=result.filter(function(r){return r._updated;}).length;
-  return {data:result,count:count};
+  /* 전체 최신순 정렬 */
+  result.sort(function(a,b){return parseTs(b.ts)-parseTs(a.ts);});
+  var cnt=result.filter(function(r){return r._re;}).length;
+  return{data:result,count:cnt};
 }
 
-function fmtTs(ts){
-  if(!ts) return '-';
-  var d=parseKoTs(ts);
-  if(!d||d.getTime()===0) return ts;
-  return(d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
-}
-
-/* ── 프록시 순환 fetch ── */
-function fetchCSV(url, onSuccess, onError){
+/* ======================================================
+   프록시 순환 fetch (10초 타임아웃)
+====================================================== */
+function fetchCSV(url,onOk,onErr){
   var proxies=[
     'https://corsproxy.io/?'+encodeURIComponent(url),
     'https://api.allorigins.win/raw?url='+encodeURIComponent(url),
     'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(url)
   ];
-  function tryNext(idx){
-    if(idx>=proxies.length){ onError('모든 프록시 연결 실패. 잠시 후 다시 시도하거나 새로고침 버튼을 눌러주세요.'); return; }
-    /* 10초 타임아웃 적용 */
-    var controller = typeof AbortController!=='undefined' ? new AbortController() : null;
-    var timer = controller ? setTimeout(function(){ controller.abort(); }, 10000) : null;
-    var opts = controller ? {signal: controller.signal} : {};
-    fetch(proxies[idx], opts)
-      .then(function(res){
-        if(timer) clearTimeout(timer);
-        if(!res.ok) throw new Error('status '+res.status);
-        return res.text();
+  function tryNext(i){
+    if(i>=proxies.length){onErr('모든 프록시 연결 실패');return;}
+    var ctrl=typeof AbortController!=='undefined'?new AbortController():null;
+    var tid=ctrl?setTimeout(function(){ctrl.abort();},10000):null;
+    fetch(proxies[i],ctrl?{signal:ctrl.signal}:{})
+      .then(function(r){if(tid)clearTimeout(tid);if(!r.ok)throw'status '+r.status;return r.text();})
+      .then(function(t){
+        if(!t.trim()||t.indexOf('<html')>=0||t.indexOf('<!DOCTYPE')>=0)throw'bad response';
+        onOk(t);
       })
-      .then(function(text){
-        if(text.indexOf('<html')>=0||text.indexOf('<!DOCTYPE')>=0) throw new Error('html');
-        if(!text.trim()) throw new Error('empty');
-        onSuccess(text);
-      })
-      .catch(function(e){
-        if(timer) clearTimeout(timer);
-        tryNext(idx+1);
-      });
+      .catch(function(){if(tid)clearTimeout(tid);tryNext(i+1);});
   }
   tryNext(0);
 }
 
-/* ── 교육 데이터 로드 ── */
-function loadEduData(id, onDone){
-  var edu = eduList.find(function(e){return e.id===id;});
-  if(!edu||!edu.url) return;
-  fetchCSV(edu.url, function(text){
-    var parsed = parseCSV(text);
-    var res = deduplicate(parsed);
-    edu.data = parsed;
-    edu.deduped = res.data;
-    edu.dedupCount = res.count;
-    edu.lastSync = new Date().toLocaleTimeString();
-    if(activeEduId===id){
-      updateSyncInfo(edu);
-      renderEduContent();
-    }
-    renderEduListTable();
-    if(onDone) onDone();
-  }, function(err){
-    edu.lastSync = '오류: '+err;
-    renderEduListTable();
+/* ======================================================
+   교육 데이터 로드
+====================================================== */
+function loadData(id,cb){
+  var e=getE(id);
+  if(!e||!e.url) return;
+  fetchCSV(e.url,function(text){
+    var parsed=parseCSV(text);
+    var res=dedup(parsed);
+    e.rows=parsed;
+    e.deduped=res.data;
+    e.dedupCount=res.count;
+    e.lastSync=new Date().toLocaleTimeString();
+    renderElist();
+    if(CUR===id){updateHeader(e);renderCur();}
+    if(cb) cb();
+  },function(err){
+    e.lastSync='오류: '+err;
+    renderElist();
   });
 }
 
-function updateSyncInfo(edu){
-  document.getElementById('sync-info').textContent = edu.name+' · '+edu.lastSync;
-  document.getElementById('cache-notice').style.display='inline';
-  var badge = document.getElementById('auto-badge');
-  badge.style.display = edu.autoRefresh ? 'flex' : 'none';
+/* ======================================================
+   자동 새로고침
+====================================================== */
+function startAuto(id){
+  var e=getE(id);
+  if(!e) return;
+  stopAuto(id);
+  if(!e.auto) return;
+  var ms=(e.interval||5)*60*1000;
+  e.timer=setInterval(function(){loadData(id);},ms);
+}
+function stopAuto(id){
+  var e=getE(id);
+  if(e&&e.timer){clearInterval(e.timer);e.timer=null;}
+}
+function toggleAuto(id){
+  var e=getE(id);
+  if(!e) return;
+  e.auto=!e.auto;
+  saveEdu();
+  if(e.auto){loadData(id);startAuto(id);}
+  else{stopAuto(id);}
+  if(CUR===id) updateHeader(e);
+  renderElist();
+}
+function changeInterval(id,v){
+  var e=getE(id);
+  if(!e) return;
+  e.interval=parseInt(v)||5;
+  saveEdu();
+  if(e.auto) startAuto(id);
 }
 
-/* ── 자동 새로고침 ── */
-function startAutoRefresh(id){
-  var edu = eduList.find(function(e){return e.id===id;});
-  if(!edu) return;
-  stopAutoRefresh(id);
-  if(!edu.autoRefresh) return;
-  var ms = (edu.interval||5)*60*1000;
-  edu.timerId = setInterval(function(){ loadEduData(id); }, ms);
-}
-function stopAutoRefresh(id){
-  var edu = eduList.find(function(e){return e.id===id;});
-  if(edu&&edu.timerId){ clearInterval(edu.timerId); edu.timerId=null; }
+/* ======================================================
+   헬퍼
+====================================================== */
+function getE(id){return EDU.find(function(e){return e.id===id;})||null;}
+function curE(){return getE(CUR);}
+function updateHeader(e){
+  document.getElementById('sync-txt').textContent=e?e.name+' · '+(e.lastSync||'로드 중...'):'교육을 선택하세요';
+  var pb=document.getElementById('pb');
+  if(e&&e.auto) pb.classList.add('on'); else pb.classList.remove('on');
 }
 
-/* ── 교육 추가 ── */
+/* ======================================================
+   교육 추가
+====================================================== */
 function addEdu(){
-  var name = document.getElementById('new-edu-name').value.trim();
-  var url = document.getElementById('new-edu-url').value.trim();
-  var st = document.getElementById('add-status');
-  if(!name){st.className='status-row status-err';st.textContent='교육 이름을 입력해 주세요.';return;}
-  if(!url||url.indexOf('docs.google.com')<0){st.className='status-row status-err';st.textContent='구글 시트 CSV URL을 확인해 주세요.';return;}
-  st.className='status-row status-loading';st.textContent='연결 확인 중...';
-  var id = 'edu_'+Date.now();
-  var edu = {id:id, name:name, url:url, autoRefresh:false, interval:5, data:[], deduped:[], dedupCount:0, lastSync:'', timerId:null};
-  fetchCSV(url, function(text){
-    var parsed = parseCSV(text);
-    if(!parsed.length){st.className='status-row status-err';st.textContent='데이터를 찾을 수 없어요. 열 매핑을 확인해 주세요.';return;}
-    var res = deduplicate(parsed);
-    edu.data=parsed; edu.deduped=res.data; edu.dedupCount=res.count; edu.lastSync=new Date().toLocaleTimeString();
-    eduList.push(edu);
-    saveEduList();
-    document.getElementById('new-edu-name').value='';
-    document.getElementById('new-edu-url').value='';
-    st.className='status-row status-ok';st.textContent='✓ '+parsed.length+'개 응답 불러옴 → '+res.data.length+'명 반영';
-    renderEduTabs();
-    renderEduListTable();
+  var name=(document.getElementById('new-name').value||'').trim();
+  var url=(document.getElementById('new-url').value||'').trim();
+  var st=document.getElementById('add-st');
+  if(!name){st.className='statusrow err';st.textContent='교육 이름을 입력해 주세요.';return;}
+  if(!url||url.indexOf('docs.google.com')<0){st.className='statusrow err';st.textContent='구글 시트 CSV URL을 확인해 주세요.';return;}
+  st.className='statusrow loading';st.textContent='연결 확인 중...';
+  var id='e'+Date.now();
+  var e={id:id,name:name,url:url,auto:false,interval:5,rows:[],deduped:[],dedupCount:0,lastSync:'',timer:null};
+  fetchCSV(url,function(text){
+    var parsed=parseCSV(text);
+    if(!parsed.length){st.className='statusrow err';st.textContent='데이터를 찾을 수 없어요. 열 매핑을 확인해 주세요.';return;}
+    var res=dedup(parsed);
+    e.rows=parsed;e.deduped=res.data;e.dedupCount=res.count;e.lastSync=new Date().toLocaleTimeString();
+    EDU.push(e);
+    saveEdu();
+    document.getElementById('new-name').value='';
+    document.getElementById('new-url').value='';
+    st.className='statusrow ok';
+    st.textContent='✓ '+parsed.length+'개 응답 → '+res.data.length+'명 반영 완료';
+    renderEtabs();
+    renderElist();
     switchEdu(id);
-  }, function(err){
-    st.className='status-row status-err';st.textContent='오류: '+err+' — 잠시 후 다시 시도해 주세요.';
+  },function(err){
+    st.className='statusrow err';st.textContent='오류: '+err;
   });
 }
 
-/* ── 교육 삭제 ── */
 function deleteEdu(id){
   if(!confirm('이 교육을 삭제할까요?')) return;
-  stopAutoRefresh(id);
-  eduList = eduList.filter(function(e){return e.id!==id;});
-  saveEduList();
-  if(activeEduId===id){
-    activeEduId = eduList.length ? eduList[0].id : null;
-    if(activeEduId) loadEduData(activeEduId);
+  stopAuto(id);
+  EDU=EDU.filter(function(e){return e.id!==id;});
+  saveEdu();
+  if(CUR===id){
+    CUR=EDU.length?EDU[0].id:null;
+    if(CUR) loadData(CUR);
   }
-  renderEduTabs();
-  renderEduListTable();
-  if(!activeEduId) showEmptyState();
+  renderEtabs();
+  renderElist();
+  if(!CUR) showEmpty();
 }
 
-/* ── 자동 새로고침 토글 ── */
-function toggleAutoRefresh(id){
-  var edu = eduList.find(function(e){return e.id===id;});
-  if(!edu) return;
-  edu.autoRefresh = !edu.autoRefresh;
-  saveEduList();
-  if(edu.autoRefresh){ loadEduData(id); startAutoRefresh(id); }
-  else{ stopAutoRefresh(id); }
-  if(activeEduId===id) updateSyncInfo(edu);
-  renderEduListTable();
-}
-
-function changeInterval(id, val){
-  var edu = eduList.find(function(e){return e.id===id;});
-  if(!edu) return;
-  edu.interval = parseInt(val)||5;
-  saveEduList();
-  if(edu.autoRefresh){ startAutoRefresh(id); }
-}
-
-/* ── 탭 렌더 ── */
-function renderEduTabs(){
-  var bar = document.getElementById('edu-bar');
-  var html = '';
-  eduList.forEach(function(e){
-    var active = e.id===activeEduId?' active':'';
-    html += '<button class="edu-tab'+active+'" onclick="switchEdu(\''+e.id+'\')">'+e.name+'</button>';
+/* ======================================================
+   탭 & 화면 전환
+====================================================== */
+function renderEtabs(){
+  var bar=document.getElementById('edu-bar');
+  var html='';
+  EDU.forEach(function(e){
+    html+='<button class="etab'+(e.id===CUR?' on':'')+'" onclick="switchEdu(\''+e.id+'\')">'
+      +e.name+'</button>';
   });
-  html += '<button class="edu-tab-add" onclick="switchEdu(null)" title="교육 관리">＋</button>';
-  bar.innerHTML = html;
+  html+='<button class="etab-add" onclick="goManage()" title="교육 추가/관리">＋</button>';
+  bar.innerHTML=html;
 }
 
 function switchEdu(id){
-  activeEduId = id;
-  if(!id){
-    showManageOnly();
-    renderEduTabs();
-    return;
-  }
-  var edu = eduList.find(function(e){return e.id===id;});
-  if(!edu) return;
-  updateSyncInfo(edu);
-  document.getElementById('empty-state').style.display='none';
-  document.getElementById('view-tabs').style.display='flex';
-  document.getElementById('view-tabs-manage').style.display='none';
-  switchVTab(activeVTab==='manage'?'stats':activeVTab);
-  renderEduTabs();
-  renderEduContent();
+  CUR=id;
+  var e=getE(id);
+  document.getElementById('empty').style.display='none';
+  document.getElementById('vtabs').style.display='flex';
+  document.getElementById('vtabs-m').style.display='none';
+  updateHeader(e);
+  renderEtabs();
+  goTab(VTAB==='manage'?'stats':VTAB);
 }
 
-function showManageOnly(){
-  activeVTab='manage';
-  document.getElementById('empty-state').style.display='none';
-  document.getElementById('view-tabs').style.display='none';
-  document.getElementById('view-tabs-manage').style.display='flex';
-  ['stats','list','manage'].forEach(function(v){
-    document.getElementById('vsec-'+v).classList.remove('active');
-  });
-  document.getElementById('vsec-manage').classList.add('active');
-  document.querySelectorAll('.vtab').forEach(function(el,i){
-    el.classList.toggle('active',i===0);
-  });
-  document.getElementById('sync-info').textContent='교육 관리';
-  document.getElementById('auto-badge').style.display='none';
-  renderEduListTable();
+function goManage(){
+  CUR=null;
+  document.getElementById('empty').style.display='none';
+  document.getElementById('vtabs').style.display='none';
+  document.getElementById('vtabs-m').style.display='flex';
+  document.getElementById('sync-txt').textContent='교육 관리';
+  document.getElementById('pb').classList.remove('on');
+  renderEtabs();
+  ['stats','list','manage'].forEach(function(v){document.getElementById('vs-'+v).classList.remove('on');});
+  document.getElementById('vs-manage').classList.add('on');
+  VTAB='manage';
+  renderElist();
 }
 
-function showEmptyState(){
-  document.getElementById('empty-state').style.display='block';
-  document.getElementById('view-tabs').style.display='none';
-  document.getElementById('view-tabs-manage').style.display='none';
-  ['stats','list','manage'].forEach(function(v){document.getElementById('vsec-'+v).classList.remove('active');});
+function showEmpty(){
+  document.getElementById('empty').style.display='block';
+  document.getElementById('vtabs').style.display='none';
+  document.getElementById('vtabs-m').style.display='none';
+  ['stats','list','manage'].forEach(function(v){document.getElementById('vs-'+v).classList.remove('on');});
 }
 
-function switchVTab(t){
-  activeVTab=t;
+function goTab(t){
+  VTAB=t;
   document.querySelectorAll('.vtab').forEach(function(el){
-    el.classList.toggle('active',el.textContent.trim().replace(' ','').indexOf(t==='stats'?'현황':t==='list'?'명단':'관리')>=0);
+    var lbl=el.textContent.trim();
+    var active=(t==='stats'&&lbl.indexOf('통계')>=0)||(t==='list'&&lbl.indexOf('명단')>=0)||(t==='manage'&&lbl.indexOf('관리')>=0);
+    el.classList.toggle('on',active);
   });
-  ['stats','list','manage'].forEach(function(v){document.getElementById('vsec-'+v).classList.remove('active');});
-  document.getElementById('vsec-'+t).classList.add('active');
-  if(t==='stats') renderStats();
-  if(t==='list') renderTable();
-  if(t==='manage') renderEduListTable();
+  ['stats','list','manage'].forEach(function(v){document.getElementById('vs-'+v).classList.remove('on');});
+  document.getElementById('vs-'+t).classList.add('on');
+  renderCur();
+  if(t==='manage') renderElist();
 }
 
-/* ── 교육 목록 카드 ── */
-function renderEduListTable(){
-  var wrap = document.getElementById('edu-list-wrap');
-  if(!eduList.length){
-    wrap.innerHTML='<div style="text-align:center;padding:2rem;color:var(--text3);font-size:13px;">등록된 교육이 없습니다. 위에서 추가해 주세요.</div>';
+function renderCur(){
+  if(VTAB==='stats') renderStats();
+  else if(VTAB==='list') renderTable();
+}
+
+function manualRefresh(){
+  if(!CUR) return;
+  loadData(CUR);
+}
+
+/* ======================================================
+   교육 목록 렌더
+====================================================== */
+function renderElist(){
+  var wrap=document.getElementById('elist');
+  if(!EDU.length){
+    wrap.innerHTML='<div style="text-align:center;padding:1.5rem;color:var(--text3);font-size:13px;">등록된 교육이 없습니다.</div>';
     return;
   }
   var html='';
-  eduList.forEach(function(e){
-    var syncColor = (e.lastSync||'').indexOf('오류')>=0 ? 'color:var(--red)' : 'color:var(--text3)';
-    html+='<div style="display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:14px 0;border-bottom:0.5px solid var(--border);">'
-      /* 교육 이름 */
-      +'<div style="min-width:120px;font-weight:500;font-size:14px;flex:1;">'+e.name+'</div>'
-      /* 동기화 시각 */
-      +'<div style="font-size:12px;'+syncColor+';min-width:80px;">'+(e.lastSync||'미연결')+'</div>'
-      /* 신청 인원 */
-      +'<div style="font-size:13px;min-width:80px;">'+(e.deduped.length||0)+'명'+(e.dedupCount?' <span style="font-size:11px;color:var(--amber);">재응답 '+e.dedupCount+'명</span>':'')+'</div>'
-      /* 자동 새로고침 */
-      +'<label style="display:flex;align-items:center;gap:5px;font-size:13px;color:var(--text2);cursor:pointer;white-space:nowrap;">'
-        +'<input type="checkbox" '+(e.autoRefresh?'checked':'')+' onchange="toggleAutoRefresh(\''+e.id+'\')" style="width:15px;height:15px;"> 자동 새로고침'
-      +'</label>'
-      /* 간격 */
-      +'<select class="interval-sel" onchange="changeInterval(\''+e.id+'\',this.value)">'
+  EDU.forEach(function(e){
+    var sc=e.lastSync.indexOf('오류')>=0?'color:var(--red)':'';
+    html+='<div class="elist-row">'
+      +'<div class="ename">'+e.name+'</div>'
+      +'<div class="esync" style="'+sc+'">'+(e.lastSync||'미연결')+'</div>'
+      +'<div class="ecnt">'+(e.deduped.length||0)+'명'+(e.dedupCount?' <span style="font-size:11px;color:var(--amber)">재응답 '+e.dedupCount+'명</span>':'')+'</div>'
+      +'<label class="eauto"><input type="checkbox" '+(e.auto?'checked':'')+' onchange="toggleAuto(\''+e.id+'\')"> 자동 새로고침</label>'
+      +'<select class="isel" onchange="changeInterval(\''+e.id+'\',this.value)">'
         +[1,3,5,10,15,30].map(function(m){return'<option value="'+m+'"'+(e.interval===m?' selected':'')+'>'+m+'분</option>';}).join('')
       +'</select>'
-      /* 버튼 3개 — 절대 잘리지 않도록 별도 div */
-      +'<div style="display:flex;gap:6px;flex-shrink:0;">'
-        +'<button class="btn-sm" onclick="loadEduData(\''+e.id+'\')">↻ 갱신</button>'
-        +'<button class="btn-sm" onclick="switchEdu(\''+e.id+'\')">보기</button>'
-        +'<button class="btn-sm" style="border-color:var(--red);color:var(--red-text);background:var(--red-bg);" onclick="deleteEdu(\''+e.id+'\')">삭제</button>'
+      +'<div class="ebtngroup">'
+        +'<button class="btn-s" onclick="loadData(\''+e.id+'\')">↻ 갱신</button>'
+        +'<button class="btn-s" onclick="switchEdu(\''+e.id+'\')">보기</button>'
+        +'<button class="btn-s btn-del" onclick="deleteEdu(\''+e.id+'\')">삭제</button>'
       +'</div>'
     +'</div>';
   });
   wrap.innerHTML=html;
 }
 
-/* ── 현재 교육 데이터 가져오기 ── */
-function getCurrentEdu(){
-  return eduList.find(function(e){return e.id===activeEduId;})||null;
-}
-
-/* ── 수동 새로고침 ── */
-function manualRefresh(){
-  if(!activeEduId) return;
-  loadEduData(activeEduId);
-}
-
-/* ── 전체 콘텐츠 렌더 ── */
-function renderEduContent(){
-  if(activeVTab==='stats') renderStats();
-  else if(activeVTab==='list') renderTable();
-}
-
-/* ── 명단 렌더 ── */
+/* ======================================================
+   명단 렌더
+====================================================== */
 function renderTable(){
-  var edu=getCurrentEdu();
-  var rows=edu?edu.deduped:[];
+  var e=curE();
+  var rows=e?e.deduped:[];
+
+  /* 차수 필터 갱신 */
+  var rds=[];
+  rows.forEach(function(d){if(d.round&&rds.indexOf(d.round)<0)rds.push(d.round);});
+  var rsel=document.getElementById('fl-round'),rcur=rsel.value;
+  rsel.innerHTML='<option value="">전체 차수</option>'+rds.map(function(r){return'<option'+(r===rcur?' selected':'')+'>'+r+'</option>';}).join('');
+
   var orgF=document.getElementById('fl-org').value;
   var roundF=document.getElementById('fl-round').value;
-  var attendF=document.getElementById('fl-attend').value;
-  var updF=document.getElementById('fl-updated').value;
-  var search=document.getElementById('fl-search').value.trim();
+  var attF=document.getElementById('fl-attend').value;
+  var reF=document.getElementById('fl-re').value;
+  var nameF=document.getElementById('fl-name').value.trim();
 
-  /* 차수 필터 업데이트 */
-  var rounds=[];
-  rows.forEach(function(d){if(d.round&&rounds.indexOf(d.round)<0)rounds.push(d.round);});
-  var sel=document.getElementById('fl-round'),cur=sel.value;
-  sel.innerHTML='<option value="">전체 차수</option>'+rounds.map(function(r){return'<option'+(r===cur?' selected':'')+'>'+r+'</option>';}).join('');
-
-  var actualF=document.getElementById('fl-actual').value;
   var filtered=rows.map(function(d,i){return Object.assign({},d,{_i:i});}).filter(function(d){
     if(orgF&&d.org!==orgF) return false;
     if(roundF&&d.round!==roundF) return false;
-    if(attendF&&(d.attend||'')!==attendF) return false;
-    if(actualF==='출석'&&d._actual!=='출석') return false;
-    if(actualF==='결석'&&d._actual!=='결석') return false;
-    if(updF==='yes'&&!d._updated) return false;
-    if(search&&d.name.indexOf(search)<0) return false;
+    if(attF){
+      var av=(d.attend||'').trim();
+      if(attF==='참석'&&av!=='참석') return false;
+      if(attF==='불참석'&&av!=='불참석'&&av!=='불참') return false;
+    }
+    if(reF==='1'&&!d._re) return false;
+    if(nameF&&d.name.indexOf(nameF)<0) return false;
     return true;
   });
 
   filtered.sort(function(a,b){
-    var va=a[sortKey]||'',vb=b[sortKey]||'';
-    if(sortKey==='ts'){va=parseKoTs(va);vb=parseKoTs(vb);}
-    return sortAsc?(va>vb?1:-1):(va<vb?1:-1);
+    var va=a[SKEY]||'',vb=b[SKEY]||'';
+    if(SKEY==='ts'){va=parseTs(va);vb=parseTs(vb);}
+    return SASC?(va>vb?1:va<vb?-1:0):(va<vb?1:va>vb?-1:0);
   });
 
-  var att=filtered.filter(function(d){return d.attend==='참석';}).length;
-  var abs=filtered.filter(function(d){return d.attend==='불참'||d.attend==='불참석';}).length;
-  document.getElementById('sum-text').innerHTML='총 <b>'+filtered.length+'</b>명 &nbsp;|&nbsp; 참석 <b style="color:var(--green)">'+att+'</b>명 &nbsp; 불참 <b style="color:var(--red)">'+abs+'</b>명';
-  var pill=document.getElementById('dedup-pill');
-  var dc=edu?edu.dedupCount:0;
-  if(dc>0){pill.style.display='inline-block';pill.textContent='재응답 '+dc+'명 자동 처리';}
+  var att=filtered.filter(function(d){return(d.attend||'').trim()==='참석';}).length;
+  var abs=filtered.filter(function(d){var v=(d.attend||'').trim();return v==='불참석'||v==='불참';}).length;
+  document.getElementById('sum-txt').innerHTML='총 <b>'+filtered.length+'</b>명 &nbsp;|&nbsp; 참석 <b style="color:var(--green)">'+att+'</b>명 &nbsp; 불참석 <b style="color:var(--red)">'+abs+'</b>명';
+
+  var pill=document.getElementById('dpill');
+  var dc=e?e.dedupCount:0;
+  if(dc>0){pill.style.display='inline';pill.textContent='재응답 '+dc+'명 자동 처리';}
   else{pill.style.display='none';}
 
-  var tbody=document.getElementById('tbl-body');
-  var noData=document.getElementById('no-data');
-  if(!filtered.length){tbody.innerHTML='';noData.style.display='block';return;}
-  noData.style.display='none';
+  var tbody=document.getElementById('tbody');
+  var nd=document.getElementById('no-data');
+  if(!filtered.length){tbody.innerHTML='';nd.style.display='block';return;}
+  nd.style.display='none';
+
   tbody.innerHTML=filtered.map(function(d){
-    var attendVal=(d.attend||'').trim();
-    var isAttend=attendVal==='참석';
-    var isAbsent=attendVal==='불참석'||attendVal==='불참';
-    var attendTxt=isAttend
+    /* 신청 참석여부: 텍스트만 */
+    var av=(d.attend||'').trim();
+    var attTxt=av==='참석'
       ?'<span style="color:var(--green);font-weight:500;">참석</span>'
-      :isAbsent
+      :(av==='불참석'||av==='불참')
         ?'<span style="color:var(--red);font-weight:500;">불참석</span>'
-        :'<span style="color:var(--text3);">'+(attendVal||'-')+'</span>';
-    var actVal=d._actual||'';
-    var actualToggle='<div class="attend-toggle">'
-      +'<button class="atg-btn'+(actVal==='출석'?' on-attend':'')+'" onclick="toggleActual('+d._i+',\'출석\')">출석</button>'
-      +'<button class="atg-btn'+(actVal==='결석'?' on-absent':'')+'" onclick="toggleActual('+d._i+',\'결석\')">결석</button>'
+        :'<span style="color:var(--text3);">'+(av||'-')+'</span>';
+
+    /* 실제 출석 체크 버튼 */
+    var act=d._actual||'';
+    var actToggle='<div class="atoggle">'
+      +'<button class="abtn'+(act==='출석'?' yes':'')+'" onclick="setActual('+d._i+',\'출석\')">출석</button>'
+      +'<button class="abtn'+(act==='결석'?' no':'')+'" onclick="setActual('+d._i+',\'결석\')">결석</button>'
       +'</div>';
-    var phoneVal=(d.phone||'').trim().replace(/^0+$/, '');
-    var phoneTxt=phoneVal===''?'':phoneVal;
-    var tr = '<tr'+(d._updated?' class="updated-row"':'')+'>'      +'<td style="color:var(--text3);font-size:12px;white-space:nowrap;">'+fmtTs(d.ts)+'</td>'      +'<td><span class="badge '+(d.org==='본사'?'badge-hq':'badge-dist')+'">'+d.org+'</span></td>'      +'<td>'+d.team+'</td>'      +'<td>'+d.job+'</td>'      +'<td style="font-weight:500;">'+d.name+(d._updated?' <span class="badge-new">재응답</span>':'')+'</td>'      +'<td style="color:var(--text2);font-size:13px;">'+phoneTxt+'</td>'      +'<td style="font-size:12px;white-space:normal;word-break:keep-all;min-width:160px;max-width:260px;line-height:1.4;">'+d.round+'</td>'      +'<td style="font-size:13px;">'+attendTxt+'</td>'      +'<td>'+actualToggle+'</td>'      +'</tr>';
-    return tr;
+
+    /* 연락처: 0, 빈값 제거 */
+    var ph=(d.phone||'').trim().replace(/^0+$/,'');
+
+    return '<tr'+(d._re?' class="re"':'')+'>'
+      +'<td style="color:var(--text3);font-size:12px;white-space:nowrap;">'+fmtTs(d.ts)+'</td>'
+      +'<td><span class="badge '+(d.org==='본사'?'hq':'dist')+'">'+d.org+'</span></td>'
+      +'<td>'+d.team+'</td>'
+      +'<td>'+d.job+'</td>'
+      +'<td style="font-weight:500;">'+d.name+(d._re?'<span class="re-badge">재응답</span>':'')+'</td>'
+      +'<td style="font-size:12px;color:var(--text2);">'+ph+'</td>'
+      +'<td style="font-size:12px;white-space:normal;word-break:keep-all;min-width:140px;line-height:1.4;">'+d.round+'</td>'
+      +'<td>'+attTxt+'</td>'
+      +'<td>'+actToggle+'</td>'
+      +'</tr>';
   }).join('');
 }
 
-function sortBy(key){
-  if(sortKey===key) sortAsc=!sortAsc; else{sortKey=key;sortAsc=true;}
-  ['ts','org','team','job','name','round'].forEach(function(k){var el=document.getElementById('arr-'+k);if(el)el.innerHTML='↕';});
-  var el=document.getElementById('arr-'+key);if(el)el.innerHTML=sortAsc?'↑':'↓';
+function sortBy(k){
+  if(SKEY===k) SASC=!SASC; else{SKEY=k;SASC=true;}
+  ['ts','org','team','job','name','round'].forEach(function(x){var el=document.getElementById('a-'+x);if(el)el.textContent='↕';});
+  var el=document.getElementById('a-'+k);if(el)el.textContent=SASC?'↑':'↓';
   renderTable();
 }
 
-function toggleAttend(i,v){
-  var edu=getCurrentEdu(); if(!edu) return;
-  edu.deduped[i].attend=v;
-  renderTable();
-  if(activeVTab==='stats') renderStats();
-}
-
-function toggleActual(i,v){
-  var edu=getCurrentEdu(); if(!edu) return;
-  edu.deduped[i]._actual=v;
+function setActual(i,v){
+  var e=curE();if(!e)return;
+  e.deduped[i]._actual=e.deduped[i]._actual===v?'':v;
   renderTable();
 }
 
+/* ======================================================
+   엑셀 내보내기
+====================================================== */
 function exportExcel(){
-  var edu=getCurrentEdu(); if(!edu||!edu.deduped.length) return;
-  var headers=['응답시간','소속','팀/유통망','직무','이름','연락처','차수','신청참석여부','실제출석','재응답여부'];
-  var rows=edu.deduped.map(function(d){
-    return[d.ts,d.org,d.team,d.job,d.name,d.phone||'',d.round,d.attend,d._actual||'미체크',d._updated?'재응답':'최초'];
-  });
-  var wsData=[headers].concat(rows);
-  var ws=XLSX.utils.aoa_to_sheet(wsData);
-  /* 컬럼 너비 설정 */
-  ws['!cols']=[
-    {wch:20},{wch:8},{wch:14},{wch:8},{wch:10},{wch:14},
-    {wch:36},{wch:10},{wch:10},{wch:10}
-  ];
-  /* 헤더 스타일 */
-  var range=XLSX.utils.decode_range(ws['!ref']);
-  for(var C=range.s.c;C<=range.e.c;C++){
-    var addr=XLSX.utils.encode_cell({r:0,c:C});
-    if(!ws[addr]) continue;
-    ws[addr].s={font:{bold:true},fill:{fgColor:{rgb:'4472C4'}},alignment:{horizontal:'center'}};
-  }
+  var e=curE();if(!e||!e.deduped.length)return;
+  var hdrs=['응답시간','소속','팀/유통망','직무','이름','연락처','교육차수','신청참석여부','실제출석','재응답여부'];
+  var data=[hdrs].concat(e.deduped.map(function(d){
+    var ph=(d.phone||'').trim().replace(/^0+$/,'');
+    return[d.ts,d.org,d.team,d.job,d.name,ph,d.round,d.attend,d._actual||'미체크',d._re?'재응답':'최초'];
+  }));
+  var ws=XLSX.utils.aoa_to_sheet(data);
+  ws['!cols']=[{wch:20},{wch:8},{wch:14},{wch:8},{wch:10},{wch:14},{wch:38},{wch:10},{wch:10},{wch:10}];
   var wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'신청명단');
-  /* 실제출석 요약 시트 */
-  var attended=edu.deduped.filter(function(d){return d._actual==='출석';});
-  var absent=edu.deduped.filter(function(d){return d._actual==='결석';});
-  var sumHeaders=['구분','인원수'];
-  var sumRows=[
-    ['총 신청',edu.deduped.length],
-    ['신청 참석',edu.deduped.filter(function(d){return d.attend==='참석';}).length],
-    ['신청 불참석',edu.deduped.filter(function(d){return d.attend==='불참석'||d.attend==='불참';}).length],
-    ['실제 출석 확인',attended.length],
-    ['실제 결석',absent.length],
-    ['미체크',edu.deduped.length-attended.length-absent.length]
-  ];
-  var wsSummary=XLSX.utils.aoa_to_sheet([sumHeaders].concat(sumRows));
-  wsSummary['!cols']=[{wch:16},{wch:8}];
-  XLSX.utils.book_append_sheet(wb,wsSummary,'요약');
-  XLSX.writeFile(wb,(edu.name||'교육')+'_신청명단_'+(new Date().toLocaleDateString('ko-KR').replace(/\. /g,'').replace('.',''))+'.xlsx');
+
+  /* 요약 시트 */
+  var total=e.deduped.length;
+  var att=e.deduped.filter(function(d){return(d.attend||'').trim()==='참석';}).length;
+  var abs=e.deduped.filter(function(d){var v=(d.attend||'').trim();return v==='불참석'||v==='불참';}).length;
+  var actAtt=e.deduped.filter(function(d){return d._actual==='출석';}).length;
+  var actAbs=e.deduped.filter(function(d){return d._actual==='결석';}).length;
+  var ws2=XLSX.utils.aoa_to_sheet([
+    ['구분','인원수'],['총 신청',total],['신청 참석',att],['신청 불참석',abs],
+    ['실제 출석',actAtt],['실제 결석',actAbs],['미체크',total-actAtt-actAbs]
+  ]);
+  ws2['!cols']=[{wch:14},{wch:8}];
+  XLSX.utils.book_append_sheet(wb,ws2,'요약');
+
+  var fn=(e.name||'교육')+'_신청명단_'+new Date().toLocaleDateString('ko-KR').replace(/\.\s*/g,'-').replace(/-$/,'')+'.xlsx';
+  XLSX.writeFile(wb,fn);
 }
 
-/* ── 통계 렌더 ── */
+/* ======================================================
+   통계 렌더
+====================================================== */
 function renderStats(){
-  var edu=getCurrentEdu();
-  var rows=edu?edu.deduped:[];
+  var e=curE();
+  var rows=e?e.deduped:[];
   var total=rows.length;
-  var attend=rows.filter(function(d){return d.attend==='참석';}).length;
-  var absent=rows.filter(function(d){return d.attend==='불참'||d.attend==='불참석';}).length;
-  document.getElementById('st-total').textContent=total;
-  document.getElementById('st-attend').textContent=attend;
-  document.getElementById('st-absent').textContent=absent;
+  var att=rows.filter(function(d){return(d.attend||'').trim()==='참석';}).length;
+  var abs=rows.filter(function(d){var v=(d.attend||'').trim();return v==='불참석'||v==='불참';}).length;
   var actual=rows.filter(function(d){return d._actual==='출석';}).length;
-  document.getElementById('st-rate').textContent=total?Math.round(attend/total*100)+'%':'0%';
-  document.getElementById('st-actual').textContent=actual;
+  document.getElementById('s-total').textContent=total;
+  document.getElementById('s-attend').textContent=att;
+  document.getElementById('s-absent').textContent=abs;
+  document.getElementById('s-actual').textContent=actual;
+
   var hq=rows.filter(function(d){return d.org==='본사';}).length;
   var dist=rows.filter(function(d){return d.org==='유통망';}).length;
   drawDonut(hq,dist);
-  var jobs={};rows.forEach(function(d){jobs[d.job]=(jobs[d.job]||0)+1;});
-  var sorted=Object.entries(jobs).sort(function(a,b){return b[1]-a[1];});
-  var maxJ=sorted.length?sorted[0][1]:1;
-  var colors=['#1D9E75','#378ADD','#7F77DD','#BA7517','#D85A30','#D4537E'];
-  document.getElementById('job-bars').innerHTML=sorted.map(function(jc,i){
-    return'<div class="bar-row"><div class="bar-label">'+jc[0]+'</div><div class="bar-track"><div class="bar-fill" style="width:'+Math.round(jc[1]/maxJ*100)+'%;background:'+colors[i%colors.length]+'"></div></div><div class="bar-count">'+jc[1]+'</div></div>';
+
+  var jobs={};
+  rows.forEach(function(d){jobs[d.job]=(jobs[d.job]||0)+1;});
+  var jsorted=Object.entries(jobs).sort(function(a,b){return b[1]-a[1];});
+  var jmax=jsorted.length?jsorted[0][1]:1;
+  var cols=['#1D9E75','#378ADD','#7F77DD','#BA7517','#D85A30','#D4537E'];
+  document.getElementById('jbars').innerHTML=jsorted.map(function(jc,i){
+    return'<div class="brow"><div class="blabel">'+jc[0]+'</div>'
+      +'<div class="btrack"><div class="bfill" style="width:'+Math.round(jc[1]/jmax*100)+'%;background:'+cols[i%cols.length]+'"></div></div>'
+      +'<div class="bcnt">'+jc[1]+'</div></div>';
   }).join('');
-  var allRounds=[];rows.forEach(function(d){if(d.round&&allRounds.indexOf(d.round)<0)allRounds.push(d.round);});
-  var rm={};allRounds.forEach(function(r){rm[r]={attend:0,absent:0};});
-  rows.forEach(function(d){if(rm[d.round])rm[d.round][d.attend==='참석'?'attend':'absent']++;});
-  document.getElementById('round-grid').innerHTML=allRounds.map(function(r){
-    var a=rm[r].attend,b=rm[r].absent,t=a+b,pct=t?Math.round(a/t*100):0;
-    return'<div class="round-item"><div class="round-name">'+r+'</div><div class="round-sub">신청 '+t+'명</div><div class="round-bar-wrap"><div class="round-bar" style="width:'+pct+'%"></div></div><div class="round-nums"><span>참석 '+a+'</span><span>불참 '+b+'</span></div></div>';
+
+  var rds=[];
+  rows.forEach(function(d){if(d.round&&rds.indexOf(d.round)<0)rds.push(d.round);});
+  var rm={};
+  rds.forEach(function(r){rm[r]={att:0,abs:0};});
+  rows.forEach(function(d){
+    if(!rm[d.round]) return;
+    var v=(d.attend||'').trim();
+    if(v==='참석') rm[d.round].att++;
+    else if(v==='불참석'||v==='불참') rm[d.round].abs++;
+  });
+  document.getElementById('rgrid').innerHTML=rds.map(function(r){
+    var a=rm[r].att,b=rm[r].abs,t=a+b,pct=t?Math.round(a/t*100):0;
+    return'<div class="ritem"><div class="rname">'+r+'</div>'
+      +'<div class="rsub">신청 '+t+'명</div>'
+      +'<div class="rbar"><div class="rbfill" style="width:'+pct+'%"></div></div>'
+      +'<div class="rnums"><span>참석 '+a+'</span><span>불참 '+b+'</span></div></div>';
   }).join('');
 }
 
 function drawDonut(hq,dist){
-  var canvas=document.getElementById('donut-chart');if(!canvas)return;
-  var ctx=canvas.getContext('2d'),total=hq+dist||1;
-  ctx.clearRect(0,0,110,110);var start=-Math.PI/2;
-  [{v:hq,c:'#378ADD'},{v:dist,c:'#7F77DD'}].forEach(function(s){
-    var angle=s.v/total*2*Math.PI;
-    ctx.beginPath();ctx.moveTo(55,55);ctx.arc(55,55,42,start,start+angle);ctx.closePath();
-    ctx.fillStyle=s.c;ctx.fill();start+=angle;
+  var cv=document.getElementById('donut');if(!cv)return;
+  var ctx=cv.getContext('2d'),tot=hq+dist||1;
+  ctx.clearRect(0,0,110,110);var s=-Math.PI/2;
+  [{v:hq,c:'#378ADD'},{v:dist,c:'#7F77DD'}].forEach(function(x){
+    var a=x.v/tot*2*Math.PI;
+    ctx.beginPath();ctx.moveTo(55,55);ctx.arc(55,55,42,s,s+a);ctx.closePath();
+    ctx.fillStyle=x.c;ctx.fill();s+=a;
   });
   ctx.beginPath();ctx.arc(55,55,26,0,2*Math.PI);ctx.fillStyle='#fff';ctx.fill();
-  document.getElementById('org-legend').innerHTML=
-    '<div class="legend-item"><div class="legend-dot" style="background:#378ADD"></div>본사 '+hq+'명</div>'
-    +'<div class="legend-item"><div class="legend-dot" style="background:#7F77DD"></div>유통망 '+dist+'명</div>';
+  document.getElementById('dleg').innerHTML=
+    '<div class="dleg"><div class="ddot" style="background:#378ADD"></div>본사 '+hq+'명</div>'
+    +'<div class="dleg"><div class="ddot" style="background:#7F77DD"></div>유통망 '+dist+'명</div>';
 }
 
-/* ── 초기화 ── */
-loadEduList();
-renderEduTabs();
-if(eduList.length){
-  activeEduId=eduList[0].id;
-  loadEduData(activeEduId, function(){
-    document.getElementById('empty-state').style.display='none';
-    document.getElementById('view-tabs').style.display='flex';
-    switchVTab('stats');
+/* ======================================================
+   초기화
+====================================================== */
+loadEdu();
+loadCol();
+renderEtabs();
+
+if(EDU.length){
+  CUR=EDU[0].id;
+  /* 저장된 교육 모두 즉시 로드 */
+  var loadCount=0;
+  EDU.forEach(function(e){
+    loadData(e.id,function(){
+      loadCount++;
+      if(loadCount===1&&e.id===CUR){
+        document.getElementById('empty').style.display='none';
+        document.getElementById('vtabs').style.display='flex';
+        goTab('stats');
+      }
+    });
+    if(e.auto) startAuto(e.id);
   });
-  eduList.forEach(function(e){ if(e.autoRefresh) startAutoRefresh(e.id); });
-} else {
-  showEmptyState();
+}else{
+  showEmpty();
 }
 </script>
 </body>
